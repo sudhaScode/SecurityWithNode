@@ -1,5 +1,5 @@
 # Road Map for Interview Preparation 
-## Myth Behind awhy Node js or Browser JavaScript is Single Thread  
+## Myth Behind why Node js or Browser JavaScript is Single Thread  
 
 ### **Why is Node.js Single-Threaded?**  
 JavaScript, including Node.js, follows a **single-threaded event loop** model. This means:  
@@ -171,6 +171,27 @@ if (isMainThread) {
     parentPort.postMessage("Hello from worker");
   });
 }
+```
+```js
+const { Worker, isMainThread, parentPort } = require('worker_threads');
+
+function fib(n) {
+  if (n <= 1) return n;
+  return fib(n - 1) + fib(n - 2);
+}
+
+if (isMainThread) {
+  const worker = new Worker(__filename);
+  worker.on('message', (result) => {
+    console.log(`Fibonacci result: ${result}`);
+  });
+
+  worker.postMessage(45); // Offloading Fibonacci calculation
+} else {
+  parentPort.on('message', (n) => {
+    const result = fib(n);
+    parentPort.postMessage(result);
+  });
 ```
 **Use Cases:**  
 - Handling **CPU-intensive tasks** (e.g., image processing, cryptography).  

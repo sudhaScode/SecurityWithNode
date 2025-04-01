@@ -45,11 +45,14 @@ router.post("/login", async(req, res)=>{
 })
 
 router.get("/profile", authenicateJWT, (req, res)=>{
+    console.log("Req for profile", req.user)
+    
     res.json({message: "Profile Access Grated", user: req.user
     })
 });
 
 router.get('/admin', authenicateJWT, authorizeRoles(['admin']), (req, res)=>{
+    console.log(req)
     res.json({message: "Admin Access Granted", usr: res.usr})
 })
 module.exports = router

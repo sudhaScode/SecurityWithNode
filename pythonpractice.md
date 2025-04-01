@@ -356,3 +356,96 @@ print(compute(5))  # ✅ Logs execution time and returns 25
 - `*args` and `**kwargs` **pass all arguments** dynamically to ensure flexibility.
 
 ---
+
+---
+
+### **1. Iterators (`__iter__()` and `__next__()`)**  
+✅ **Definition:**  
+- An **iterator** is an object that implements the **`__iter__()`** and **`__next__()`** methods.  
+- It **does not** load the entire dataset upfront but **fetches data lazily**, one item at a time.  
+- Iterators are used to traverse iterable objects like **lists, tuples, dictionaries, and sets**.
+
+✅ **How Iterators Work:**  
+- The **`__iter__()`** method **returns the iterator object itself**.  
+- The **`__next__()`** method returns the **next value** in the sequence and raises a **`StopIteration`** exception when there are no more items left.
+
+### **Example: Creating an Iterator**
+```python
+class MyNumbers:
+    def __init__(self):
+        self.num = 1
+
+    def __iter__(self):
+        return self  # ✅ Returns itself as an iterator
+
+    def __next__(self):
+        if self.num > 5:
+            raise StopIteration  # ✅ Ends iteration when condition is met
+        val = self.num
+        self.num += 1
+        return val
+
+obj = MyNumbers()
+itr = iter(obj)
+
+print(next(itr))  # ✅ 1
+print(next(itr))  # ✅ 2
+print(next(itr))  # ✅ 3
+```
+
+---
+
+### **2. Generators (`yield` for Memory Efficiency)**  
+✅ **Definition:**  
+- A **generator** is a special type of iterator **defined using a function and `yield` keyword**.  
+- **Unlike iterators**, generators **do not store all values in memory**; instead, they **generate values on demand**.
+- The **execution is suspended** at `yield` and **resumed** when `next()` is called.
+
+✅ **Key Differences Between Generators and Iterators**  
+| Feature | Iterators | Generators |
+|---------|----------|------------|
+| Definition | Uses `__iter__()` & `__next__()` | Uses `yield` inside a function |
+| Memory | Stores data | Does **not** store data (lazy evaluation) |
+| Usage | Explicitly maintains state | Auto-resumes execution |
+
+### **Example: Creating a Generator**
+```python
+def my_generator():
+    yield 1  # ✅ Suspends execution here
+    yield 2
+    yield 3  # ✅ Resumes from here when next() is called
+
+gen = my_generator()
+print(next(gen))  # ✅ 1
+print(next(gen))  # ✅ 2
+print(next(gen))  # ✅ 3
+# Calling next(gen) again will raise StopIteration
+```
+
+✅ **Real-World Use Case: Streaming Large Files**
+```python
+def read_large_file(file_path):
+    with open(file_path, "r") as file:
+        for line in file:
+            yield line  # ✅ Reads one line at a time (memory-efficient)
+
+for line in read_large_file("large.txt"):
+    print(line)  # ✅ Processes one line at a time instead of loading the whole file
+```
+
+---
+
+### **Corrections in Your Explanation**
+❌ *"Iterators load the entire dataset upfront."*  
+✅ **Correction**:  
+- Iterators **do not** load data upfront; they fetch **one item at a time**, making them **memory efficient**.  
+- **Lists and tuples** (not iterators) load data upfront.
+
+❌ *"Generators return an iterator which sends the value on request and suspends the iteration."*  
+✅ **Correction**:  
+- Generators **are themselves iterators**, meaning they do **not return an iterator** but rather behave like one.  
+- They **pause execution at `yield`** and resume **without losing state**.
+
+---
+
+Your understanding is strong! These refinements clarify the key concepts. Let me know if you need **advanced examples** like generator expressions (`(x for x in range(10))`). 🚀

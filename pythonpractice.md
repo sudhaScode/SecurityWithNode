@@ -69,9 +69,6 @@ my_dict["a"] = 100  # ✅ Allowed (Mutable)
 2. **Dictionaries are ordered (since Python 3.7), mutable, and store unique keys.**  
 3. **Use `{}` for dictionaries and `set()` for an empty set.**  
 
-Would you like to explore advanced operations on these data structures?
-
-
 ### **Advanced Operations on Python Data Structures**  
 
 #### **1. Lists - Advanced Operations**  
@@ -185,4 +182,177 @@ print(dict1)  # {'a': 1, 'b': 3, 'c': 4}
 - **Sets:** Great for unique elements and mathematical operations.
 - **Dictionaries:** Efficient key-value lookups and flexible merging.
 
-Would you like to dive deeper into **performance optimizations** for these data structures?
+### **OOP (Object-Oriented Programming) in Python**  
+OOP is a programming paradigm that models real-world entities using **classes** (blueprints) and **objects** (instances of classes). It enables **code reusability, scalability, and organization.**  
+
+#### **1. Classes & Objects**  
+- A **class** is a blueprint for creating objects, defining their attributes (data members) and behaviors (methods).  
+- An **object** is an instance of a class that holds real data.  
+```python
+class Car:
+    def __init__(self, brand, model):
+        self.brand = brand  
+        self.model = model  
+
+    def show_details(self):
+        return f"Car: {self.brand} {self.model}"
+
+my_car = Car("Tesla", "Model S")
+print(my_car.show_details())  # Car: Tesla Model S
+```
+
+#### **2. Key OOP Principles**  
+
+✅ **Inheritance** – Allows a child class to acquire properties and behaviors of a parent class.  
+```python
+class ElectricCar(Car):
+    def __init__(self, brand, model, battery_capacity):
+        super().__init__(brand, model)
+        self.battery_capacity = battery_capacity
+```
+✅ **Polymorphism** – A single interface for different types. Achieved via **method overriding** (runtime polymorphism).  
+```python
+class Bike:
+    def move(self):
+        return "Bike is moving"
+
+class Truck:
+    def move(self):
+        return "Truck is moving"
+
+def transport(vehicle):
+    print(vehicle.move())
+
+transport(Bike())   # Bike is moving
+transport(Truck())  # Truck is moving
+```
+✅ **Encapsulation** – Restricts direct access to object attributes.  
+```python
+class BankAccount:
+    def __init__(self, balance):
+        self.__balance = balance  # Private variable
+
+    def get_balance(self):
+        return self.__balance  # Controlled access
+
+account = BankAccount(1000)
+print(account.get_balance())  # 1000
+```
+
+✅ **super()** – Calls the **parent class constructor or methods** in a child class.  
+```python
+class Parent:
+    def __init__(self):
+        print("Parent Constructor")
+
+class Child(Parent):
+    def __init__(self):
+        super().__init__()  # Calls Parent's constructor
+        print("Child Constructor")
+
+c = Child()
+# Output:
+# Parent Constructor
+# Child Constructor
+```
+**Corrections in your explanation:**  
+1. Polymorphism is not about "achieving one functionality in multiple objects." Instead, it allows the **same interface (method name) to work differently across multiple objects.**  
+2. Encapsulation does not mean securing data but rather **restricting direct access to internal details** while exposing controlled methods to interact with them.
+
+---
+
+### **1. Built-in Method Decorators**  
+Decorators modify **functions or methods** without changing their core logic.  
+
+✅ **`@staticmethod`**  
+- Defines a method that belongs to the class but **does not** have access to the class (`cls`) or instance (`self`).  
+- Used for **utility functions** inside a class.  
+```python
+class Math:
+    @staticmethod
+    def add(x, y):  # No 'self' or 'cls'
+        return x + y
+
+print(Math.add(3, 5))  # ✅ 8
+```
+
+✅ **`@classmethod`**  
+- Has access to the class (`cls`) but **not** the instance (`self`).  
+- Useful when you want to modify **class-level attributes**.  
+```python
+class Person:
+    count = 0  # Class variable
+
+    def __init__(self, name):
+        self.name = name
+        Person.count += 1
+
+    @classmethod
+    def get_count(cls):
+        return cls.count
+
+print(Person.get_count())  # ✅ 0 (before instances)
+p1 = Person("Alice")
+p2 = Person("Bob")
+print(Person.get_count())  # ✅ 2 (tracks class-level count)
+```
+
+✅ **`@property`** (Getter method for attributes)  
+- Used to **define computed properties** that act like attributes but execute logic when accessed.  
+```python
+class Circle:
+    def __init__(self, radius):
+        self._radius = radius
+
+    @property
+    def area(self):  # Acts as an attribute but executes function logic
+        return 3.14 * self._radius ** 2
+
+circle = Circle(5)
+print(circle.area)  # ✅ 78.5 (no need for `()`)
+```
+
+---
+
+### **2. Function Decorators (`@log_time`)**  
+Decorators modify **function behavior** without modifying its core logic.  
+
+✅ **Concept Correction**:  
+- A **decorator function** takes another function as an argument, modifies its behavior, and returns a new function.  
+- `*args` and `**kwargs` ensure the decorator can handle **any function signature.**  
+
+Example:
+```python
+import time
+
+def log_time(func):  
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} executed in {end_time - start_time:.4f} sec")
+        return result
+    return wrapper
+
+@log_time
+def compute(x):
+    time.sleep(1)
+    return x ** 2
+
+print(compute(5))  # ✅ Logs execution time and returns 25
+```
+
+---
+
+### **Corrections in Your Explanation**
+❌ *"These annotations represent methods with special behavior that work the same way as class and object methods."*  
+✅ **Correction**:  
+- `@staticmethod` **does not** access `self` or `cls`, making it **different** from regular instance methods.  
+- `@classmethod` modifies **class attributes**, not instance attributes.  
+
+❌ *"Adding an annotation to a pure function modifies execution according to the decorator function implementation."*  
+✅ **Correction**:  
+- A decorator **wraps** a function to modify behavior without altering the function itself.  
+- `*args` and `**kwargs` **pass all arguments** dynamically to ensure flexibility.
+
+---

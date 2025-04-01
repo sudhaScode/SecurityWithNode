@@ -1,5 +1,5 @@
 # Road Map for Interview Preparation 
-## Myth Behind My node js or Browser JavaScript is Single Thread  
+## Myth Behind awhy Node js or Browser JavaScript is Single Thread  
 
 ### **Why is Node.js Single-Threaded?**  
 JavaScript, including Node.js, follows a **single-threaded event loop** model. This means:  

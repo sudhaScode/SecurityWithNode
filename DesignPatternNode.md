@@ -512,3 +512,269 @@ print(sorter.execute_sort([3, 1, 2]))  # Output: [1, 2, 3]
 ✅ Use **DRY, SOLID, and Modular Code** for maintainability.  
 ✅ **Organize code** using **modules and imports**.  
 ✅ Implement **design patterns** where needed (Factory, Singleton, Decorator).  
+
+
+---
+
+## **1. Node.js Event Loop & Non-Blocking I/O**
+✅ **Definition:**  
+- **Node.js is a single-threaded, event-driven JavaScript runtime** designed for **asynchronous programming**.  
+- It **handles multiple tasks concurrently** using **event-driven architecture** without blocking the main thread.  
+
+✅ **How Event Loop Works:**  
+1. **Async task starts execution.**  
+2. **Event Loop registers the task & moves on** without waiting for completion.  
+3. **Task completes asynchronously** (via OS, worker threads, or async APIs).  
+4. **Callback function processes the result** when the task finishes.  
+5. **Event Loop continues execution** of queued tasks.  
+
+✅ **Components of the Event Loop:**
+- **Call Stack** → Executes synchronous JavaScript code.  
+- **Callback Queue** → Holds callbacks waiting for execution.  
+- **Microtask Queue** → Handles high-priority tasks (e.g., Promises, `process.nextTick()`).  
+- **Timers Queue** → Handles scheduled functions (`setTimeout`, `setInterval`).  
+
+✅ **Example: Non-Blocking I/O**
+```javascript
+const fs = require("fs");
+
+console.log("Start");
+
+// Asynchronous file read
+fs.readFile("example.txt", "utf8", (err, data) => {
+    if (err) throw err;
+    console.log("File Content:", data);
+});
+
+console.log("End"); // ✅ Runs before file read completes
+```
+**Output Order:**  
+```
+Start  
+End  
+File Content: (data from example.txt)
+```
+✅ **Why?** → **File I/O is handled asynchronously** while the event loop continues execution.
+
+---
+
+## **2. Ways to Achieve Non-Blocking I/O**
+### **1️⃣ Microtasks & Promises**
+✅ **Microtasks (Promises, `process.nextTick()`) run before normal callbacks.**  
+- Promises represent asynchronous operations with states:  
+  - **Pending** → Task started.  
+  - **Fulfilled** → Task completed successfully.  
+  - **Rejected** → Task failed.  
+✅ **Handled using `.then()`, `.catch()`, and `.finally()`.**  
+```javascript
+console.log("Before Promise");
+
+Promise.resolve().then(() => console.log("Promise Resolved"));
+
+console.log("After Promise");
+```
+**Output Order:**  
+```
+Before Promise  
+After Promise  
+Promise Resolved  ✅ (Microtask executed after sync code)
+```
+---
+
+### **2️⃣ Callbacks**
+✅ **Traditional approach** → Pass a function as an argument to an async function.  
+```javascript
+function fetchData(callback) {
+    setTimeout(() => {
+        callback("Data received");
+    }, 2000);
+}
+
+fetchData((data) => console.log(data)); // ✅ Callback function executed after async task
+```
+✅ **Issue:** Callback Hell (nested callbacks).  
+
+---
+
+### **3️⃣ Async/Await**
+✅ **Modern approach** → Writes asynchronous code like synchronous code.  
+✅ **Uses `async` for functions & `await` for waiting on async tasks.**  
+```javascript
+async function fetchData() {
+    console.log("Fetching...");
+    let data = await new Promise((resolve) => setTimeout(() => resolve("Data Ready"), 2000));
+    console.log(data); // ✅ Executes after 2s, looks like sync code
+}
+fetchData();
+```
+✅ **Why use Async/Await?**  
+- **Improves readability.**  
+- **Handles errors using `try...catch` easily.**  
+- **No Callback Hell!**  
+
+---
+
+## **Corrections & Refinements**
+❌ *"Microtask implemented by promises, which tracks eventual completion of asynchronous tasks, it represents a process by different states fulfilled, rejected, partially fulfilled."*  
+✅ **Correction:**  
+- **"Microtasks (Promises, `process.nextTick()`) are executed before the Callback Queue, ensuring prioritized execution."**  
+
+❌ *"Event loop handles the tasks to push to queue and stack."*  
+✅ **Correction:**  
+- **"Event Loop picks tasks from different queues (Callback Queue, Microtask Queue, Timers) and executes them in order."**  
+
+## **Streams & Buffers in Node.js**
+Streams and Buffers are **core concepts in Node.js** that help **handle large amounts of data efficiently** without loading everything into memory at once.
+
+---
+
+# **1️⃣ What are Streams?**
+- **Streams** are used to handle **large amounts of data** efficiently.
+- Instead of loading **entire files or network responses**, **streams process data in chunks**.
+- They are **memory-efficient and fast** for handling I/O operations.
+
+### **Examples of Data That Uses Streams:**
+✅ **File reading/writing**  
+✅ **HTTP requests & responses**  
+✅ **Real-time data processing (e.g., video streaming, logs, chat apps)**  
+
+---
+
+# **2️⃣ Types of Streams in Node.js**
+There are **4 types** of streams in Node.js:
+
+### **🔹 1. Readable Streams**
+➡ Used to **read data chunk by chunk**.  
+➡ Example: **Reading a file, getting data from an HTTP request.**  
+
+✅ **Example: Reading a file using a Readable Stream**
+```javascript
+const fs = require('fs');
+
+const readStream = fs.createReadStream('data.txt', 'utf8');
+
+readStream.on('data', (chunk) => {
+    console.log("Received Chunk:", chunk);
+});
+
+readStream.on('end', () => {
+    console.log("File Read Completed.");
+});
+```
+**How It Works?**
+- `fs.createReadStream('data.txt')` opens a stream to read the file.
+- The `'data'` event fires whenever a chunk is received.
+- The `'end'` event fires when reading is complete.
+
+---
+
+### **🔹 2. Writable Streams**
+➡ Used to **write data chunk by chunk**.  
+➡ Example: **Writing to a file, sending data to an API.**  
+
+✅ **Example: Writing to a file using a Writable Stream**
+```javascript
+const fs = require('fs');
+
+const writeStream = fs.createWriteStream('output.txt');
+
+writeStream.write('Hello, this is a chunk of data.\n');
+writeStream.write('Another chunk of data.');
+writeStream.end();
+
+writeStream.on('finish', () => {
+    console.log("Writing to file completed.");
+});
+```
+**How It Works?**
+- `fs.createWriteStream('output.txt')` creates a stream to write to a file.
+- `.write()` sends data chunks.
+- `.end()` signals that writing is done.
+- `'finish'` event fires when writing is complete.
+
+---
+
+### **🔹 3. Duplex Streams**
+➡ **Can read & write data simultaneously** (like a two-way communication).  
+➡ Example: **Sockets, TCP connections, WebSockets.**
+
+✅ **Example: Custom Duplex Stream**
+```javascript
+const { Duplex } = require('stream');
+
+const duplexStream = new Duplex({
+    write(chunk, encoding, callback) {
+        console.log("Writing:", chunk.toString());
+        callback();
+    },
+    read(size) {
+        this.push("Data from Duplex Stream\n");
+        this.push(null);  // Ends the stream
+    }
+});
+
+duplexStream.write("Client Request");
+duplexStream.on("data", (chunk) => console.log("Received:", chunk.toString()));
+```
+**How It Works?**
+- Implements **both `write()` & `read()`** methods.
+- Allows **simultaneous** reading & writing.
+
+---
+
+### **🔹 4. Transform Streams**
+➡ A special type of **Duplex Stream** that **modifies data while reading & writing**.  
+➡ Example: **Compression, encryption, data transformation.**
+
+✅ **Example: Converting Text to Uppercase (Transform Stream)**
+```javascript
+const { Transform } = require('stream');
+
+const transformStream = new Transform({
+    transform(chunk, encoding, callback) {
+        this.push(chunk.toString().toUpperCase());
+        callback();
+    }
+});
+
+process.stdin.pipe(transformStream).pipe(process.stdout);
+```
+**How It Works?**
+- **Takes input**, processes it, and **outputs modified data**.
+- Uses **`.pipe()`** to connect streams.
+
+---
+
+# **3️⃣ What is a Buffer?**
+- A **Buffer** is a **temporary storage** for **binary data**.
+- Used when **reading or writing files, network packets, or any binary data**.
+
+### ✅ **Example: Creating & Using Buffers**
+```javascript
+const buffer = Buffer.from('Hello, Node.js');
+console.log(buffer.toString());  // Converts back to text
+console.log(buffer.toString('hex'));  // Converts to hexadecimal
+console.log(buffer.toString('base64'));  // Converts to base64 encoding
+```
+**Key Points:**
+- Buffers handle **binary data**.
+- Used in **file I/O, networking, and data encoding**.
+- Supports **different encodings** like UTF-8, Base64, and Hex.
+
+---
+
+# **4️⃣ Streams vs Buffers**
+| Feature  | **Streams**  | **Buffers**  |
+|----------|------------|------------|
+| **Data Handling** | Processes data in **chunks** | Stores data **entirely** in memory |
+| **Memory Usage** | **Low (efficient for large files)** | **High (loads entire file into memory)** |
+| **Performance** | **Fast** | **Slower for large data** |
+| **Use Cases** | File I/O, HTTP requests, logs, real-time data | Encoding, network packets, file conversions |
+
+---
+
+# **5️⃣ Summary**
+✅ **Streams are efficient for handling large data** (files, network, etc.)  
+✅ **There are 4 types of streams:** Readable, Writable, Duplex, Transform  
+✅ **Buffers store binary data for temporary processing**  
+✅ **Use streams for large files, Buffers for small binary data**  

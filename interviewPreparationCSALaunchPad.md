@@ -116,7 +116,7 @@ When working with high-performance Node.js applications, handling multiple concu
 const cluster = require("cluster");
 const os = require("os");
 
-if (cluster.isMaster) {
+if (cluster.isPrimary) { // isMaster deprecated 
   const numCPUs = os.cpus().length; // Get the number of CPU cores
 
   console.log(`Master process ${process.pid} is running`);

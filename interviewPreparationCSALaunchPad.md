@@ -289,13 +289,34 @@ Timeout callback executed
 ```python
 import asyncio
 
+nums = [1, 2, 3, 4, 5]
+letters = ['A', 'B', 'C', 'D', 'E']
+condition = asyncio.Condition()
+turn = 0  # 0 for numsPrinter's turn, 1 for letterPrinter's turn
+
+async def numsPrinter():
+    global turn
+    for num in nums:
+        async with condition:
+            await condition.wait_for(lambda: turn == 0)
+            print(f"Number {num}", end=" ")
+            turn = 1
+            condition.notify_all()
+
+async def letterPrinter():
+    global turn
+    for letter in letters:
+        async with condition:
+            await condition.wait_for(lambda: turn == 1)
+            print(f"Letter {letter}", end=" ")
+            turn = 0
+            condition.notify_all()
+
 async def main():
-    print("Start")
-    await asyncio.sleep(1)
-    print("Timeout callback executed")
+    await asyncio.gather(numsPrinter(), letterPrinter())
 
 asyncio.run(main())
-print("End")
+
 ```
 **Expected Output:**
 ```
@@ -346,6 +367,38 @@ def task():
 thread = threading.Thread(target=task)
 thread.start()
 thread.join()
+import concurrent.futures
+import threading
+
+nums = [1, 2, 3, 4, 5]
+letters = ['A', 'B', 'C', 'D', 'E']
+condition = threading.Condition()
+turn = 0  # 0 for numsPrinter's turn, 1 for letterPrinter's turn
+
+def numsPrinter():
+    global turn
+    for num in nums:
+        with condition:
+            while turn != 0:
+                condition.wait()
+            print(f"Number {num}", end=" ")
+            turn = 1
+            condition.notify_all()
+
+def letterPrinter():
+    global turn
+    for letter in letters:
+        with condition:
+            while turn != 1:
+                condition.wait()
+            print(f"Letter {letter}", end=" ")
+            turn = 0
+            condition.notify_all()
+
+with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+    executor.submit(numsPrinter)
+    executor.submit(letterPrinter)
+
 ```
 **Key Points:**  
 - The `threading` module runs tasks in separate threads.  

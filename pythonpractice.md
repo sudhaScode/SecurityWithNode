@@ -600,3 +600,180 @@ finally:
 - The `except` block **catches errors raised in the `try` block** and allows the program to continue running.  
 
 ---
+
+### **Authentication in FastAPI using JWT & `passport-jwt` Equivalent**  
+
+FastAPI uses **OAuth2 with JWT** for authentication, similar to `passport-jwt` in Node.js. Here’s how to set up **JWT-based authentication** in FastAPI.
+
+---
+
+## **🔹 Steps to Implement Authentication in FastAPI**
+1. **Install Dependencies** (`fastapi`, `pydantic`, `passlib`, `pyjwt`, `python-multipart`)
+2. **Create User Authentication Models**
+3. **Generate & Validate JWT Tokens**
+4. **Protect Routes Using JWT**
+5. **Test Authentication with FastAPI**
+
+---
+
+## **1️⃣ Install Required Dependencies**
+Run the following command:
+```sh
+pip install fastapi uvicorn passlib[bcrypt] pyjwt python-multipart
+```
+- `fastapi` → Web framework
+- `uvicorn` → ASGI server
+- `passlib[bcrypt]` → Password hashing
+- `pyjwt` → JWT handling
+- `python-multipart` → Handles form data (for login)
+
+---
+
+## **2️⃣ Define User Authentication Models**
+Create a `models.py` file:
+
+```python
+from pydantic import BaseModel
+
+class User(BaseModel):
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+```
+
+---
+
+## **3️⃣ Generate & Validate JWT Tokens**
+Create a `auth.py` file:
+
+```python
+from datetime import datetime, timedelta
+from typing import Optional
+import jwt
+from passlib.context import CryptContext
+
+# Secret key & JWT configurations
+SECRET_KEY = "your_secret_key"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode_jwt(token: str):
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        return None  # Token expired
+    except jwt.InvalidTokenError:
+        return None  # Invalid token
+```
+
+---
+
+## **4️⃣ Implement Login & JWT Authentication**
+Create a `main.py` file:
+
+```python
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from auth import hash_password, verify_password, create_access_token, decode_jwt
+from models import User, Token
+
+app = FastAPI()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+# Simulated user database
+fake_users_db = {
+    "admin": {"username": "admin", "hashed_password": hash_password("password123")}
+}
+
+@app.post("/login", response_model=Token)
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = fake_users_db.get(form_data.username)
+    
+    if not user or not verify_password(form_data.password, user["hashed_password"]):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
+    access_token = create_access_token({"sub": form_data.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/protected")
+async def protected_route(token: str = Depends(oauth2_scheme)):
+    payload = decode_jwt(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    return {"message": f"Welcome {payload['sub']}, you have access!"}
+```
+
+---
+
+## **5️⃣ Test Authentication in FastAPI**
+### **Step 1: Start FastAPI Server**
+Run the following command:
+```sh
+uvicorn main:app --reload
+```
+
+### **Step 2: Test Login API**
+Use **Postman or cURL** to test:
+```sh
+curl -X 'POST' 'http://127.0.0.1:8000/login' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'username=admin&password=password123'
+```
+**Response:**
+```json
+{
+    "access_token": "your_jwt_token",
+    "token_type": "bearer"
+}
+```
+
+### **Step 3: Access Protected Route**
+Use the token received:
+```sh
+curl -X 'GET' 'http://127.0.0.1:8000/protected' \
+  -H 'Authorization: Bearer your_jwt_token'
+```
+**Response (if authenticated):**
+```json
+{
+    "message": "Welcome admin, you have access!"
+}
+```
+
+---
+
+## **🔹 How is This Similar to `passport-jwt` in Node.js?**
+| **Feature**          | **FastAPI + JWT**             | **passport-jwt (Node.js)**       |
+|----------------------|------------------------------|----------------------------------|
+| Token Generation    | `jwt.encode()`               | `passport-jwt` & `jsonwebtoken` |
+| Token Decoding      | `jwt.decode()`               | `passport.authenticate("jwt")`  |
+| User Authentication | OAuth2PasswordBearer         | `passport.use(new JwtStrategy)` |
+| Hashing Passwords   | `passlib[bcrypt]`            | `bcrypt`                        |
+
+---
+
+## **✅ Conclusion**
+1. **Implemented JWT authentication** in FastAPI, similar to `passport-jwt`.
+2. **Secured API routes** using JWT tokens.
+3. **Used `OAuth2PasswordBearer` for token handling**.
+
+Would you like me to add **refresh tokens** or user role-based authentication? 🚀

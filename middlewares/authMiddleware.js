@@ -1,6 +1,7 @@
 const passport = require('passport')
 
-c
+exports.authenticateJWT = passport.authenticate('jwt', {session:false});
+
 exports.authorizeRoles =(roles) => (req, res, next)=>{
     console.log(req)
     if(!roles.includes(req.user.role)){

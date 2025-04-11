@@ -3,7 +3,7 @@ const dotenv = require('dotenv')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs')
 const User = require('../models/userModels')
-const {authenicateJWT, authorizeRoles} = require('../middlewares/authMiddleware');
+const {authenticateJWT, authorizeRoles} = require('../middlewares/authMiddleware');
 
 dotenv.config()
 const generateToken = (user)=>{
@@ -44,14 +44,14 @@ router.post("/login", async(req, res)=>{
 
 })
 
-router.get("/profile", authenicateJWT, (req, res)=>{
+router.get("/profile", authenticateJWT, (req, res)=>{
     console.log("Req for profile", req.user)
     
     res.json({message: "Profile Access Grated", user: req.user
     })
 });
 
-router.get('/admin', authenicateJWT, authorizeRoles(['admin']), (req, res)=>{
+router.get('/admin', authenticateJWT, authorizeRoles(['admin']), (req, res)=>{
     console.log(req)
     res.json({message: "Admin Access Granted", usr: res.usr})
 })

@@ -61,4 +61,45 @@ if match:
     print("Match found:", match.group())
 else:
     print("No match found")
+
+
+    import threading
+
+numbers = [1, 2, 3, 4, 5, 6, 7]
+letters = ["A", "B", "C", "D", "E", "F"]
+condition = threading.Condition()
+turn = 0  # 0 for numbers, 1 for letters
+
+def print_number():
+    global turn
+    for num in numbers:
+        with condition:
+            while turn != 0:
+                condition.wait()
+            print(f"Number {num}", end=' ')
+            turn = 1
+            condition.notify_all()
+
+def print_letter():
+    global turn
+    for letter in letters:
+        with condition:
+            while turn != 1:
+                condition.wait()
+            print(f"Letter {letter}", end =' ')
+            turn = 0
+            condition.notify_all()
+
+# Creating threads
+thread1 = threading.Thread(target=print_number)
+thread2 = threading.Thread(target=print_letter)
+
+# Starting threads
+thread1.start()
+thread2.start()
+
+# Waiting for threads to complete
+thread1.join()
+thread2.join()
+
     

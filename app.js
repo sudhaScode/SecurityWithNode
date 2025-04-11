@@ -8,11 +8,35 @@ const dotenv = require('dotenv')
 const passport = require('./config/passport')
 const authRoutes = require('./routes/authRoutes')
 const {Worker, isMainThread, parentPort } =require('worker_threads')
+const rateLimiter = require('express-rate-limiter')
 
 
 dotenv.config()
 //server
+const limiter = rateLimiter({
+    windowMs: 1 * 60 * 1000, // 1 minute
+  max: 10, // limit each IP to 10 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+})
+/**
+ * // Useful if you're running multiple Node.js instances (like behind a load balancer).
+ const RedisStore = require('rate-limit-redis');
+const Redis = require('ioredis');
 
+const redisClient = new Redis();
+
+const limiter = rateLimit({
+  store: new RedisStore({
+    sendCommand: (...args) => redisClient.call(...args),
+  }),
+  windowMs: 60 * 1000,
+  max: 20,
+});
+
+ */
+
+
+// Load Balancing
 if(cluster.isPrimary){
    const cpus = os.cpus().length;
    // console.log("NUmber of cpus: ", cpus)
@@ -45,7 +69,7 @@ else{
 
 
 const app = express()
-
+app.use(limiter); // global middleware or can be apply to indivisual route
 app.use(express.json())
 
 app.use(passport.initialize());

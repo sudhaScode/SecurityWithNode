@@ -188,3 +188,221 @@ Along with **DSA**, expect questions around **scalability**, **caching**, and **
 
 **🔥 Best of luck for your interview! 🔥**  
 Want me to simulate a mock interview with live coding? 🚀
+
+## **Common & Useful MongoDB Aggregation Operators**  
+MongoDB **aggregation framework** processes data records and returns computed results. It is useful for data transformation, filtering, grouping, and analytics.
+
+---
+
+## **1. `$match` → Filter Documents**  
+Filters documents based on criteria (like SQL `WHERE`).  
+
+```js
+const pipeline = [
+  { $match: { role: "developer", age: { $gte: 25 } } }
+];
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+
+---
+
+## **2. `$group` → Group Documents**  
+Groups documents and applies aggregate functions like **sum, avg, count, etc.**  
+
+```js
+const pipeline = [
+  { $group: { _id: "$role", totalSalary: { $sum: "$salary" }, avgSalary: { $avg: "$salary" } } }
+];
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+### **Example Output:**  
+```json
+[
+  { "_id": "developer", "totalSalary": 160000, "avgSalary": 80000 },
+  { "_id": "manager", "totalSalary": 120000, "avgSalary": 120000 }
+]
+```
+
+---
+
+## **3. `$sort` → Sort Documents**  
+Sorts documents in **ascending (1)** or **descending (-1)** order.  
+
+```js
+const pipeline = [
+  { $sort: { salary: -1 } }  // Sort by salary in descending order
+];
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+
+---
+
+## **4. `$project` → Include/Exclude Fields**  
+Select specific fields and compute new ones.  
+
+```js
+const pipeline = [
+  { $project: { name: 1, role: 1, annualSalary: { $multiply: ["$salary", 12] } } }
+];
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+
+### **Example Output:**  
+```json
+[
+  { "name": "Alice", "role": "developer", "annualSalary": 960000 },
+  { "name": "Bob", "role": "manager", "annualSalary": 1440000 }
+]
+```
+
+---
+
+## **5. `$unwind` → Flatten Arrays**  
+Expands an array field into separate documents.  
+
+```js
+const pipeline = [
+  { $unwind: "$skills" },
+  { $group: { _id: "$skills", count: { $sum: 1 } } }
+];
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+
+### **Example Output:**  
+```json
+[
+  { "_id": "JavaScript", "count": 2 },
+  { "_id": "React", "count": 1 },
+  { "_id": "Python", "count": 1 }
+]
+```
+
+---
+
+## **6. `$lookup` → Join Collections (Foreign Key Lookup)**  
+Joins `users` collection with `projects` collection.  
+
+```js
+const pipeline = [
+  { 
+    $lookup: {
+      from: "projects", // Foreign collection
+      localField: "_id",
+      foreignField: "userId",
+      as: "userProjects"
+    }
+  }
+];
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+
+---
+
+## **7. `$count` → Count Documents**  
+Counts total documents after filtering.  
+
+```js
+const pipeline = [
+  { $match: { role: "developer" } },
+  { $count: "developerCount" }
+];
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+
+---
+
+## **8. `$limit` and `$skip` → Pagination**  
+**Skip first 5 records & return next 10.**  
+
+```js
+const pipeline = [
+  { $sort: { salary: -1 } },
+  { $skip: 5 },
+  { $limit: 10 }
+];
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+
+---
+
+## **9. `$addFields` → Add Computed Fields**  
+Calculates **monthly tax deduction** based on **salary**.  
+
+```js
+const pipeline = [
+  { 
+    $addFields: { 
+      monthlyTax: { $multiply: ["$salary", 0.1] }  // 10% tax deduction
+    }
+  }
+];
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+
+---
+
+## **10. `$merge` → Store Aggregation Result in a New Collection**  
+Saves the aggregation result into a new collection.  
+
+```js
+const pipeline = [
+  { 
+    $merge: {
+      into: "summary",
+      whenMatched: "merge",
+      whenNotMatched: "insert"
+    }
+  }
+];
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+
+---
+
+## **Bonus: Full Aggregation Example (Analytics Report)**  
+
+```js
+const pipeline = [
+  { $match: { role: "developer" } },        // 1. Filter developers
+  { $unwind: "$skills" },                   // 2. Expand skills array
+  { $group: {                                // 3. Count developers per skill
+      _id: "$skills",
+      count: { $sum: 1 },
+      avgSalary: { $avg: "$salary" }
+    } 
+  },
+  { $sort: { count: -1 } },                 // 4. Sort by popularity
+  { $limit: 5 }                             // 5. Top 5 skills
+];
+
+const result = await User.aggregate(pipeline);
+console.log(result);
+```
+
+---
+
+## **Key Aggregation Functions Summary**
+| Operator    | Purpose |
+|------------|---------|
+| `$match`   | Filter documents (like `WHERE`) |
+| `$group`   | Group & aggregate (like `GROUP BY`) |
+| `$sort`    | Sort results (`ORDER BY`) |
+| `$project` | Select fields & compute new ones (`SELECT column`) |
+| `$unwind`  | Flatten arrays |
+| `$lookup`  | Join collections (Foreign Key Join) |
+| `$count`   | Count total documents |
+| `$limit` & `$skip` | Pagination |
+| `$addFields` | Add computed fields |
+| `$merge`   | Store results in a new collection |
+
+Would you like **real-world project analytics examples**?

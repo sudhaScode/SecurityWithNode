@@ -406,3 +406,157 @@ console.log(result);
 | `$merge`   | Store results in a new collection |
 
 Would you like **real-world project analytics examples**?
+
+In MongoDB, **joins** are performed using the **`$lookup` aggregation stage**. It allows you to join documents from two collections — similar to SQL joins.
+
+---
+
+### **Your Scenario**
+You have:
+- An `employees` collection with fields like `name`, `experience`, and `_id`.
+- A `salaries` collection that references employees, e.g., via `employee_id`.
+
+---
+
+### **Example Data**
+
+**employees collection**
+```json
+{
+  _id: ObjectId("123"),
+  name: "Sudarshan",
+  experience: 3.3
+}
+```
+
+**salaries collection**
+```json
+{
+  _id: ObjectId("456"),
+  employee_id: ObjectId("123"),
+  salary: 80000
+}
+```
+
+---
+
+### **Query Using `$lookup`**
+```js
+db.employees.aggregate([
+  {
+    $lookup: {
+      from: "salaries",          // collection to join
+      localField: "_id",         // field from employees
+      foreignField: "employee_id", // field from salaries
+      as: "salaryDetails"
+    }
+  },
+  {
+    $unwind: "$salaryDetails"   // to flatten the array
+  },
+  {
+    $project: {
+      name: 1,
+      experience: 1,
+      salary: "$salaryDetails.salary"
+    }
+  }
+])
+```
+
+---
+
+### **Output**
+```json
+{
+  "name": "Sudarshan",
+  "experience": 3.3,
+  "salary": 80000
+}
+```
+
+---
+
+### **Explanation**
+- `$lookup`: Joins `employees` with `salaries` where `employees._id == salaries.employee_id`.
+- `$unwind`: Flattens the joined array (optional if one salary per employee).
+- `$project`: Selects the fields you want in the final output.
+
+---
+
+Great! If you're using **Mongoose** in a **Node.js** app, you can perform **joins using `populate`**, which is much cleaner and easier than `$lookup`.
+
+---
+
+### **Step-by-Step: Using `.populate()` in Mongoose**
+
+#### **1. Define the Schemas with a reference**
+
+```js
+// models/Employee.js
+const mongoose = require('mongoose');
+
+const EmployeeSchema = new mongoose.Schema({
+  name: String,
+  experience: Number,
+});
+
+module.exports = mongoose.model('Employee', EmployeeSchema);
+```
+
+```js
+// models/Salary.js
+const mongoose = require('mongoose');
+
+const SalarySchema = new mongoose.Schema({
+  salary: Number,
+  employee: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employee'  // reference to Employee model
+  }
+});
+
+module.exports = mongoose.model('Salary', SalarySchema);
+```
+
+---
+
+#### **2. Query using `.populate()`**
+
+```js
+const Salary = require('./models/Salary');
+
+async function getEmployeeSalaryDetails() {
+  const data = await Salary.find()
+    .populate('employee', 'name experience')  // populate name and experience
+    .select('salary employee');              // optionally select salary and populated employee
+  console.log(data);
+}
+```
+
+---
+
+### **Sample Output**
+```json
+[
+  {
+    "salary": 80000,
+    "employee": {
+      "_id": "123",
+      "name": "Sudarshan",
+      "experience": 3.3
+    }
+  }
+]
+```
+
+---
+
+### **Benefits of `.populate()`**
+- No need for manual joins
+- Works automatically with references
+- Easily customizable fields
+
+---
+
+Would you like to reverse it and populate salary info *from* the employee side too?

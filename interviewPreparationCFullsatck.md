@@ -660,6 +660,98 @@ In a **Node.js backend**, role-based access control (RBAC) rules are often defin
 3. **Applying them in the frontend using CASL (`@casl/ability`)**  
 
 ---
+### override res.send with middleware 
+
+Great! In **Express.js**, you can override the `res.send()` method inside middleware to intercept and log both the **request** and the **response body** before it’s actually sent.
+
+Here’s a complete example of how to **override `res.send()` in Express**:
+
+---
+
+### ✅ **Use Case**  
+- Intercept `res.send()`  
+- Log the `req.method`, `req.originalUrl`, and response body  
+- Send the original response afterward
+
+---
+
+### **Implementation**
+
+```javascript
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+// Middleware to override res.send()
+app.use((req, res, next) => {
+  const originalSend = res.send;
+
+  res.send = function (body) {
+    // Log the request and response
+    console.log('--- Logging Middleware ---');
+    console.log('Request Method:', req.method);
+    console.log('Request URL:', req.originalUrl);
+    console.log('Response Body:', body);
+
+    // Optionally: store logs or metrics here
+
+    // Call the original res.send with the body
+    return originalSend.call(this, body);
+  };
+
+  next();
+});
+
+// Example Route
+app.post('/contact', (req, res) => {
+  const { name, email } = req.body;
+  res.send({ message: `Hello, ${name}! We’ve received your contact form.` });
+});
+
+// Start Server
+app.listen(3000, () => {
+  console.log('Server listening on http://localhost:3000');
+});
+```
+
+---
+
+### **Output Example**
+On POST `/contact`:
+```json
+{
+  "name": "Sudarshan",
+  "email": "sudarshan@example.com"
+}
+```
+
+In terminal:
+```
+--- Logging Middleware ---
+Request Method: POST
+Request URL: /contact
+Response Body: {"message":"Hello, Sudarshan! We’ve received your contact form."}
+```
+
+---
+
+### **Need to log only JSON?**
+You can parse and inspect the `body` like:
+```js
+if (typeof body === 'string') {
+  try {
+    const parsed = JSON.parse(body);
+    console.log('Parsed Body:', parsed);
+  } catch (err) {
+    console.log('Raw Body:', body);
+  }
+}
+```
+
+---
+
+Let me know if you want to also **store logs into a file**, database, or external logging service like **Logstash or CloudWatch**.
 
 ### **1️⃣ Backend (Express.js) – Defining & Sending Rules**  
 In your Express.js API, you generate **user-specific permissions** based on roles and send them to the frontend.  

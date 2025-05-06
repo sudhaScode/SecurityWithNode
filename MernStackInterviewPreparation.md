@@ -1,3 +1,25 @@
+Based on the blog titled "10 Essential NPM Packages Every Node.js Developer Should Master in 2025" by Aleksei Aleinikov, the complete list includes:([DEV Community][1])
+
+1. **Fastify** – Lightning-fast web framework for Node.js with schema-first routes and easy scaling.
+2. **Axios** – Robust HTTP client supporting retries, interceptors, and works in both Node.js and browsers.
+3. **Prisma** – Type-safe ORM with support for safe migrations and instant IntelliSense.
+4. **Socket.io** – Real-time communication library with fallback options, pub/sub support, and binary data handling.
+5. **Vite** – Next-generation frontend tooling with fast development server, hot module replacement, and SSR/SSG readiness.
+6. **Vitest** – A fast unit testing framework with Jest-like syntax, native ESM support, and high performance.
+7. **jsonwebtoken** – Battle-tested library for JSON Web Tokens (JWT), supporting HMAC, key rotation, and more.
+8. **dotenv** – Zero-dependency module that loads environment variables from a `.env` file into `process.env`.
+9. **Pino** – High-performance JSON logger with support for streams and pretty-printing.
+10. **Zod** – Schema validation library that integrates with TypeScript, providing OpenAPI-ready schemas.([DEV Community][1])
+
+These packages are considered essential for modern Node.js development in 2025, covering areas such as web frameworks, HTTP clients, ORMs, real-time communication, frontend tooling, testing, authentication, environment configuration, logging, and schema validation.
+
+For more details, you can refer to the original blog post: ([DEV Community][1])
+
+[1]: https://dev.to/aleksei_aleinikov/10-essential-npm-packages-every-nodejs-dev-should-master-2025-357c?utm_source=chatgpt.com "10 Essential NPM Packages Every Node.js Dev Should Master (2025)"
+
+
+
+
 Great! Since you're a **MERN stack developer**, your interview will likely focus on **DSA (Data Structures & Algorithms)** along with **JavaScript-based problem-solving** and **system design concepts**.
 
 ---

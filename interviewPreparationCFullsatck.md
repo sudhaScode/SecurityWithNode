@@ -2306,9 +2306,16 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model("User", userSchema);
 
 async function connectDB() {
-  await mongoose.connect("mongodb://localhost:27017/myDatabase");
-  console.log("Connected to MongoDB");
-}
+  await mongoose.connect("mongodb://localhost:27017/myDatabase", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+
+  // Recommended for real-time stability
+  serverSelectionTimeoutMS: 5000, // How long to try selecting a server (default: 30s)
+  socketTimeoutMS: 45000,         // How long to wait on socket operations
+  connectTimeoutMS: 10000,        // Connection attempt timeout
+  heartbeatFrequencyMS: 10000     // How often driver checks server status
+});
 ```
 
 ---

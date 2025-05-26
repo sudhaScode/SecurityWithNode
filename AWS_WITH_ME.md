@@ -3,10 +3,20 @@ The AWS SDK for JavaScript (v3) adopts a modular architecture, allowing develope
 ## Setup
 Get the `Access key ID`, `Secret Access key`, and region
 Execute the `$ aws configure` which creates .aws/crendentials and .aws/config file or set env directly
+seeting environment variables:
+```bash
+export AWS_ACCESS_KEY_ID=your-access-key-id
+export AWS_SECRET_ACCESS_KEY=your-secret-access-key
+export AWS_SESSION_TOKEN=your-session-token  # (optional, used for temporary credentials)
+
+```
 - Access Key ID
 - Secret Access Key
 - Default region
 - Output format (optional)
+  OR <br>
+const iamClient = new IAMClient({ region: 'us-east-1' }); from AWS SDK for JavaScript (v3, @aws-sdk/*) determines who you are (credentials) and what you can access (permissions) using a well-defined default credential provider chain.
+
 ### 📦 Commonly Used `@aws-sdk` Modules for Node.js
 
 Here are some of the frequently utilized modules:
@@ -255,4 +265,176 @@ Zip this file into my-lambda.zip before running the main script.
 - Managed Policy Attachment: Grants log write access (AWSLambdaBasicExecutionRole).
 - Role ARN: Required when creating the Lambda function.
 
+## ✅ Use Case -AWS EKS
+Goal: Use @aws-sdk/client-eks to interact with an EKS cluster that runs a Dockerized version of interviewcraft.ai pulled from ECR.
 
+📦 Prerequisites
+- Dockerized app image (e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com/interviewcraft:latest)
+- ECR repository and image already pushed
+- EKS cluster created (e.g. interviewcraft-cluster)
+- kubectl configured locally
+⚙️ Step-by-Step Setup with `Node.js + @aws-sdk/client-eks`
+1. Install the SDK
+``` bash
+npm install @aws-sdk/client-eks @aws-sdk/client-ecr @aws-sdk/credential-provider-node
+
+```
+2. Authenticate EKS Cluster (Generate Kubeconfig)
+``` js
+import { EKSClient, DescribeClusterCommand } from "@aws-sdk/client-eks";
+import { fromIni } from "@aws-sdk/credential-provider-node";
+import { execSync } from "child_process";
+
+const region = "us-east-1";
+const clusterName = "interviewcraft-cluster";
+
+const client = new EKSClient({ region, credentials: fromIni() });
+
+async function updateKubeconfig() {
+  const { cluster } = await client.send(new DescribeClusterCommand({ name: clusterName }));
+
+  const endpoint = cluster.endpoint;
+  const ca = cluster.certificateAuthority.data;
+
+  // Use aws CLI via exec to update kubeconfig (best practice)
+  execSync(`aws eks update-kubeconfig --name ${clusterName} --region ${region}`, { stdio: "inherit" });
+
+  console.log("✅ kubeconfig updated. Ready to use kubectl.");
+}
+
+updateKubeconfig();
+
+```
+3. Deploy InterviewCraft App Using kubectl
+Create a deployment.yaml file for Kubernetes:
+``` yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: interviewcraft-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: interviewcraft
+  template:
+    metadata:
+      labels:
+        app: interviewcraft
+    spec:
+      containers:
+      - name: interviewcraft
+        image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/interviewcraft:latest
+        ports:
+        - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: interviewcraft-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: interviewcraft
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+
+```
+Apply it using:
+``` bash
+kubectl apply -f deployment.yaml
+```
+4. Allow EKS to Pull from ECR (IAM Role + Policy)
+EKS nodes use an IAM role. Attach this policy to allow ECR image pull:
+``` json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+
+```
+You may also need to create an ECR login secret in your cluster:
+``` bash
+aws ecr get-login-password --region us-east-1 | \
+kubectl create secret docker-registry ecr-creds \
+--docker-server=123456789012.dkr.ecr.us-east-1.amazonaws.com \
+--docker-username=AWS \
+--docker-password="$(cat -)" \
+--namespace=default
+```
+Add this secret to your deployment.yaml under spec.template.spec.imagePullSecrets.
+✅ Final Outcome
+- Your interviewcraft.ai app is served from a scalable, highly available Kubernetes deployment.
+- It's deployed on EKS, pulling its image from ECR.
+- You can scale it, monitor it, and expose it to the public using a LoadBalancer service.
+
+
+# AWS with Python
+In Python, AWS services are typically accessed using the boto3 library, which is the official AWS SDK for Python. It provides a high-level and low-level interface for all AWS services.
+✅ boto3
+- Official AWS SDK for Python
+- Supports all AWS services
+- Interacts via clients and resources
+- Uses botocore under the hood for low-level service definitions
+  ``` bash
+  pip install boto3
+  ```
+🔐 Credentials Configuration
+1. Environment Variables
+``` ini
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+```
+2. ~/.aws/credentials file
+```ini
+[default]
+aws_access_key_id = YOUR_KEY
+aws_secret_access_key = YOUR_SECRET
+```
+3. IAM Role (if running on EC2, Lambda, etc.)
+🔧 Commonly Used Services via boto3
+  | AWS Service             | Client Example                   | Notes                                      |
+| ----------------------- | -------------------------------- | ------------------------------------------ |
+| S3 (Storage)            | `boto3.client('s3')`             | Upload, download, list buckets             |
+| EC2 (Compute)           | `boto3.client('ec2')`            | Launch, stop, describe instances           |
+| Lambda                  | `boto3.client('lambda')`         | Invoke, deploy functions                   |
+| IAM                     | `boto3.client('iam')`            | Users, roles, policies                     |
+| CloudWatch              | `boto3.client('cloudwatch')`     | Logs, alarms, metrics                      |
+| DynamoDB                | `boto3.resource('dynamodb')`     | Table-based NoSQL DB                       |
+| ECR (Docker images)     | `boto3.client('ecr')`            | Push, pull, manage images                  |
+| ECS (Container Service) | `boto3.client('ecs')`            | Fargate, task definitions, service updates |
+| EKS                     | `boto3.client('eks')`            | Kubernetes clusters                        |
+| CloudFormation          | `boto3.client('cloudformation')` | Stack automation                           |
+
+📦 Structure & Usage Patterns
+1. Client Interface (Low-level API)
+```python
+
+import boto3
+
+s3_client = boto3.client('s3')
+response = s3_client.list_buckets()
+print(response)
+```
+2. Resource Interface (High-level abstraction for some services)
+```python
+
+import boto3
+s3 = boto3.resource('s3')
+bucket = s3.Bucket('my-bucket')
+for obj in bucket.objects.all():
+    print(obj.key)
+```

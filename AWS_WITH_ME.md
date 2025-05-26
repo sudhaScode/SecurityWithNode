@@ -380,6 +380,88 @@ Add this secret to your deployment.yaml under spec.template.spec.imagePullSecret
 - Your interviewcraft.ai app is served from a scalable, highly available Kubernetes deployment.
 - It's deployed on EKS, pulling its image from ECR.
 - You can scale it, monitor it, and expose it to the public using a LoadBalancer service.
+## CI/CD pipeline 
+To deploy to AWS Fargate as a final step in your CI/CD pipeline after running `npm run lint`, `npm run test`, and `npm run build`, you'll need to:
+
+### 1. **Build and push a Docker image**
+
+First, package your app as a Docker image and push it to a container registry like Amazon ECR.
+
+### 2. **Update the ECS Fargate service**
+
+After pushing the image, update the ECS service to use the new image.
+
+### Here's an example using a GitHub Actions workflow:
+
+```yaml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Lint
+      run: npm run lint
+
+    - name: Test
+      run: npm run test
+
+    - name: Build
+      run: npm run build
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: my-app
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Deploy to Amazon ECS
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ecs-task-def.json
+        service: my-fargate-service
+        cluster: my-cluster
+        image: ${{ steps.login-ecr.outputs.registry }}/my-app:${{ github.sha }}
+        wait-for-service-stability: true
+```
+
+### Notes:
+
+* Replace `my-app`, `my-fargate-service`, and `my-cluster` with your real values.
+* You need a valid ECS task definition file (`ecs-task-def.json`) in your repo or generate it dynamically.
+* Ensure AWS credentials are stored in GitHub Secrets.
+
+Would you like help generating the `ecs-task-def.json` file or using another CI/CD tool like GitLab CI, Bitbucket Pipelines, or AWS CodePipeline?
 
 
 # AWS with Python

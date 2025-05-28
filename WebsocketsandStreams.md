@@ -729,3 +729,201 @@ npm start
 * Online user tracking
 
 ---
+
+# Streaming 
+
+Certainly! Let's build a FastAPI server that streams responses from a Large Language Model (LLM) like Gemini, and a React.js frontend that consumes this stream using both `EventSource` (Server-Sent Events) and the `ReadableStream` interface with `body.getReader()`.
+
+---
+
+## 🧠 Overview
+
+* **Backend**: FastAPI with a streaming endpoint using `StreamingResponse`.
+* **Frontend**: React.js consuming the stream via:
+
+  * `EventSource` (SSE) - server sent events
+  * `fetch` with `body.getReader()`([surajtc.dev][1], [Sahan Serasinghe's Blog][2], [GitHub][3])
+
+---
+
+## 🛠️ Backend: FastAPI Streaming Endpoint
+
+### 1. **Install Dependencies**
+
+```bash
+pip install fastapi uvicorn
+```
+
+
+
+### 2. **Create `main.py`**
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+import asyncio
+
+app = FastAPI()
+
+async def fake_llm_response(prompt: str):
+    # Simulate streaming response from an LLM
+    for word in ["Hello", "world!", "This", "is", "a", "streamed", "response."]:
+        yield f"data: {word}\n\n"
+        await asyncio.sleep(0.5)
+
+@app.get("/stream")
+async def stream():
+    return StreamingResponse(fake_llm_response("Your prompt here"), media_type="text/event-stream")
+```
+
+
+
+### 3. **Run the Server**
+
+```bash
+uvicorn main:app --reload
+```
+
+
+
+---
+
+## ⚛️ Frontend: React.js Client
+
+### 1. **Create React App**
+
+```bash
+npx create-react-app streaming-client
+cd streaming-client
+```
+
+
+
+### 2. **Using `EventSource`**
+
+```jsx
+// src/EventSourceComponent.js
+import React, { useEffect, useState } from 'react';
+
+function EventSourceComponent() {
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    const eventSource = new EventSource('http://localhost:8000/stream');
+
+    eventSource.onmessage = (e) => {
+      setMessages((prev) => [...prev, e.data]);
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+  return (
+    <div>
+      <h2>EventSource Stream</h2>
+      {messages.map((msg, idx) => (
+        <p key={idx}>{msg}</p>
+      ))}
+    </div>
+  );
+}
+
+export default EventSourceComponent;
+```
+
+
+
+### 3. **Using `fetch` with `body.getReader()`**
+
+```jsx
+// src/FetchStreamComponent.js
+import React, { useEffect, useState } from 'react';
+
+function FetchStreamComponent() {
+  const [messages, setMessages] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await fetch('http://localhost:8000/stream');
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop();
+        for (let line of lines) {
+          if (line.startsWith('data: ')) {
+            setMessages((prev) => [...prev, line.replace('data: ', '')]);
+          }
+        }
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return (
+    <div>
+      <h2>Fetch Stream</h2>
+      {messages.map((msg, idx) => (
+        <p key={idx}>{msg}</p>
+      ))}
+    </div>
+  );
+}
+
+export default FetchStreamComponent;
+```
+
+
+
+### 4. **Update `App.js`**
+
+```jsx
+// src/App.js
+import React from 'react';
+import EventSourceComponent from './EventSourceComponent';
+import FetchStreamComponent from './FetchStreamComponent';
+
+function App() {
+  return (
+    <div>
+      <EventSourceComponent />
+      <FetchStreamComponent />
+    </div>
+  );
+}
+
+export default App;
+```
+
+
+
+### 5. **Run the React App**
+
+```bash
+npm start
+```
+
+
+
+---
+
+## ✅ Summary
+
+* **FastAPI**: Serves a streaming endpoint simulating LLM responses.
+* **React.js**: Consumes the stream using both `EventSource` and `fetch` with `body.getReader()`.([GitHub][3])
+
+This setup demonstrates how to stream data from a FastAPI backend to a React frontend using different methods. You can replace the `fake_llm_response` function with actual calls to your LLM (e.g., Gemini) that support streaming.
+
+If you need further assistance integrating with a specific LLM or handling more complex streaming scenarios, feel free to ask!
+
+[1]: https://www.surajtc.dev/blog/streming-text-data?utm_source=chatgpt.com "Streaming data from an HTTP endpoint - Suraj TC"
+[2]: https://sahansera.dev/streaming-apis-python-nextjs-part2/?utm_source=chatgpt.com "Streaming APIs with FastAPI and Next.js — Part 2 - Sahan Serasinghe"
+[3]: https://github.com/langchain-ai/langchain/discussions/18072?utm_source=chatgpt.com "Not receiving streaming response back to Java Script function #18072"

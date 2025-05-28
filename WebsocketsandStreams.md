@@ -927,3 +927,145 @@ If you need further assistance integrating with a specific LLM or handling more 
 [1]: https://www.surajtc.dev/blog/streming-text-data?utm_source=chatgpt.com "Streaming data from an HTTP endpoint - Suraj TC"
 [2]: https://sahansera.dev/streaming-apis-python-nextjs-part2/?utm_source=chatgpt.com "Streaming APIs with FastAPI and Next.js — Part 2 - Sahan Serasinghe"
 [3]: https://github.com/langchain-ai/langchain/discussions/18072?utm_source=chatgpt.com "Not receiving streaming response back to Java Script function #18072"
+---
+# Axios - Fetching made efficient and reliable
+Great! Here's a **production-ready, reusable Axios utility module** that includes:
+
+✅ Automatic retries
+✅ Token refresh on 401
+✅ Centralized error handling
+✅ Configurable timeouts
+✅ Easy to plug into any **React** or **Node.js** project
+
+---
+
+## 📁 `axiosClient.js` (or `.ts` if using TypeScript)
+
+```js
+// axiosClient.js
+import axios from 'axios';
+import axiosRetry from 'axios-retry';
+
+// Placeholder: swap with your auth storage logic
+import { getAccessToken, refreshAccessToken, saveAccessToken } from './authService';
+
+// Create an Axios instance
+const axiosClient = axios.create({
+  baseURL: 'https://api.example.com', // 👈 your API
+  timeout: 5000,                      // 5s timeout
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Apply retry logic (exponential backoff)
+axiosRetry(axiosClient, {
+  retries: 3,
+  retryDelay: (retryCount) => retryCount * 1000, // 1s, 2s, 3s
+  retryCondition: (error) => {
+    // Retry on network errors or 5xx or specific 401s
+    return axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+      (error.response?.status === 401 && error.response?.data?.message === 'token_expired');
+  },
+});
+
+// Add request interceptor to inject access token
+axiosClient.interceptors.request.use(
+  async (config) => {
+    const token = await getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Add response interceptor to handle token refresh
+axiosClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Handle 401 due to expired token
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      error.response?.data?.message === 'token_expired'
+    ) {
+      originalRequest._retry = true;
+
+      try {
+        const newToken = await refreshAccessToken();     // 👈 implement this
+        saveAccessToken(newToken);                       // 👈 save new token
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return axiosClient(originalRequest);             // Retry original request
+      } catch (refreshError) {
+        console.error('Token refresh failed', refreshError);
+        // Optionally: redirect to login or show error
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default axiosClient;
+```
+
+---
+
+## 🧱 Example `authService.js`
+
+```js
+let token = 'initial_token'; // In reality, use cookies, localStorage, or secure storage
+
+export const getAccessToken = async () => {
+  return token;
+};
+
+export const saveAccessToken = (newToken) => {
+  token = newToken;
+};
+
+export const refreshAccessToken = async () => {
+  // Call your real refresh endpoint
+  const res = await axios.post('https://api.example.com/auth/refresh', {
+    refresh_token: 'stored-refresh-token',
+  });
+  return res.data.access_token;
+};
+```
+
+---
+
+## 🧪 How to Use in React/Node
+
+```js
+import axiosClient from './axiosClient';
+
+const loadUser = async () => {
+  try {
+    const res = await axiosClient.get('/user/profile');
+    console.log('User:', res.data);
+  } catch (err) {
+    console.error('Fetch failed', err);
+  }
+};
+```
+
+---
+
+## ✅ Summary
+
+| Feature                           | Included?             |
+| --------------------------------- | --------------------- |
+| Access token injection            | ✅ Request interceptor |
+| Retry on failure (e.g., 401, 5xx) | ✅ `axios-retry`       |
+| Token refresh logic               | ✅ Customizable        |
+| Timeout + headers config          | ✅ Yes                 |
+| Reusable client                   | ✅ Yes                 |
+
+---
+
+Would you like me to scaffold this into a working **React + FastAPI fullstack starter project** as well?

@@ -543,7 +543,7 @@ AWS Lambda is an example of an event-driven architecture. Most AWS services gene
 
 The code you run on AWS Lambda is called a Lambda function. Think of a function as a small, self-contained application. After you create your Lambda function, it is ready to run as soon as it is initiated. Each function includes your code as well as some associated configuration information, including the function name and resource requirements. Lambda functions are stateless, with no affinity to the underlying infrastructure. Lambda can rapidly launch as many copies of the function as needed to scale to the rate of incoming events.
 
- ### Actions you can take with AWS Lambda:
+**Actions you can take with AWS Lambda:**
  - Access Permissions
  - Triggering Events - Specify which events or event sources can initiate the function
  - Write code - with dependencies or libraries necessary to your code
@@ -553,6 +553,61 @@ Serverless provides speed and innovation in your business applications
 ```
 With AWS Lambda, you can run code without provisioning or managing servers. Lambda initiates events on your behalf, scales automatically, and provides built-in monitoring and logging. You can write code in your preferred language. You do configure the memory for your function, but not CPU. You don't work with the OS. AWS provides the operating environment at runtime.
 ```
+## AWS Lambda works using event sources and triggers:
+Understand event driven architectures like AWS Lambda
+**Invocation models for running Lambda functions**
+
+Event sources can invoke a Lambda function in three general patterns. These patterns are called invocation models. Each invocation model is unique and addresses a different application and developer needs. The invocation model you use for your Lambda function often depends on the event source you are using. It's important to understand how each invocation model initializes functions and handles errors and retries.
+1. **Synchronous invocation**
+   When you invoke a function synchronously, Lambda runs the function and waits for a response. When the function completes, Lambda returns the response from the 
+   function's code with additional data, such as the version of the function that was invoked. Synchronous events expect an immediate response from the function 
+   invocation.
+   With this model, there are no built-in retries. You must manage your retry strategy within your application code.
+
+   **Synchronous AWS Service**
+   The following AWS services invoke Lambda synchronously:
+      - Amazon API Gateway
+      - Amazon Cognito
+      - AWS CloudFormation
+      - Amazon Alexa
+      - Amazon Lex
+      - Amazon CloudFront
+   2. **Asychronous invocation**
+      When you invoke a function asynchronously, events are queued and the requestor doesn't wait for the function to complete. This model is appropriate when the 
+      client doesn't need an immediate response.
+      With the asynchronous model, you can make use of destinations. Use destinations to send records of asynchronous invocations to other services. 
+       **Asynchronous AWS Service Integration**
+      The following AWS services invoke Lambda asynchronously: 
+        - Amazon SNS 
+        - Amazon S3
+        - Amazon EventBridge
+    **Destination**
+    The following diagram shows a function that is processing asynchronous invocations. When the function returns a success response or exits without producing an 
+    error, Lambda sends a record of the invocation to an EventBridge event bus. When an event fails all processing attempts, Lambda sends an invocation record to 
+    an Amazon Simple Queue Service (Amazon SQS) queue.
+![image](https://github.com/user-attachments/assets/bc63047e-7c69-431d-80f3-f398eec2e8f3)
+3. **Polling invocation**
+   **Polling**
+   This invocation model is designed to integrate with AWS streaming and queuing based services with no code or server management. Lambda will poll (or watch) 
+   these services, retrieve any matching events, and invoke your functions. This invocation model supports the following services:
+      - Amazon Kinesis
+      - Amazon SQS
+      - Amazon DynamoDB Streams
+   With this type of integration, AWS will manage the poller on your behalf and perform synchronous invocations of your function.
+   **Event Sourcce Maping**
+  The configuration of services as event triggers is known as event source mapping. This process occurs when you configure event sources to launch your Lambda 
+  functions and then grant theses sources IAM permissions to access the Lambda function.
+  Lambda reads events from the following services:
+    - Amazon DynamoDB
+    - Amazon Kinesis
+    - Amazon MQ
+    - Amazon Managed Streaming for Apache Kafka (MSK)
+    - self-managed Apache Kafka
+    - Amazon SQS
+4. **Invocation model error behavior**
+   When deciding how to build your functions, consider how each invocation method handles errors. The following chart provides a quick outline of the error handling behavior of each invocation model.
+![image](https://github.com/user-attachments/assets/893392b2-c103-4777-9f3b-d52dc227cf7f)
+
 
 
   

@@ -607,7 +607,156 @@ Event sources can invoke a Lambda function in three general patterns. These patt
 4. **Invocation model error behavior**
    When deciding how to build your functions, consider how each invocation method handles errors. The following chart provides a quick outline of the error handling behavior of each invocation model.
 ![image](https://github.com/user-attachments/assets/893392b2-c103-4777-9f3b-d52dc227cf7f)
+<br>
+**Lambda execution environment**
 
+Lambda invokes your function in an execution environment, which is a secure and isolated environment. The execution environment manages the resources required to run your function. The execution environment also provides lifecycle support for the function's runtime and any external extensions associated with your function. 
+**Execution environment lifecycle**
+![image](https://github.com/user-attachments/assets/f1efd3a4-14f5-4ba0-990b-e1517d7174d7)
+When you create your Lambda function, you specify configuration information, such as the amount of available memory and the maximum invocation time allowed for your function. Lambda uses this information to set up the execution environment.
 
+The function's runtime and each external extension are processes that run within the execution environment. Permissions, resources, credentials, and environment variables are shared between the function and the extensions.
+  1. **init phase**
+  In this phase, Lambda creates or unfreezes an execution environment with the configured resources, downloads the code for the function and all layers, initializes any extensions, initializes the runtime, and then runs the function’s initialization code (the code outside the main handler). 
+  
+  The Init phase happens either during the first invocation, or before function invocations if you have enabled provisioned concurrency.
+  
+  The Init phase is split into three sub-phases: 
+  
+  - Extension init - starts all extensions
+  - Runtime init - bootstraps the runtime
+  - Function init - runs the function's static code
+  These sub-phases ensure that all extensions and the runtime complete their setup tasks before the function code runs.
+  
+  2. **Invoke Phase**
+   Lambda invokes the function handler. After the function runs to completion, Lambda prepares to handle another function invocation.
+  3. **Shutdown Phase**
+     If the Lambda function does not receive any invocations for a period of time, this phase initiates. In the Shutdown phase, Lambda shuts down the runtime, 
+     alerts the extensions to let them stop cleanly, and then removes the environment. Lambda sends a shutdown event to each extension, which tells the extension 
+     that the environment is about to be shut down.
 
+5. **Performance optimization**
+   Serverless applications can be extremely performant, thanks to the ease of parallelization and concurrency. While the Lambda service manages scaling automatically, you can optimize the individual Lambda functions used in your application to reduce latency and increase throughput.
+6. **Cold and warm starts**
+A cold start occurs when a new execution environment is required to run a Lambda function. When the Lambda service receives a request to run a function, the service first prepares an execution environment. During this step, the service downloads the code for the function, then creates the execution environment with the specified memory, runtime, and configuration. Once complete, Lambda runs any initialization code outside of the event handler before finally running the handler code. 
+
+In a warm start, the Lambda service retains the environment instead of destroying it immediately. This allows the function to run again within the same execution environment. This saves time by not needing to initialize the environment.  
+![image](https://github.com/user-attachments/assets/d12fb74c-924d-4e15-871f-4970089d1e52)
+
+**Best practice: Minimize cold start times**
+
+When you invoke a Lambda function, the invocation is routed to an execution environment to process the request. If the environment is not already initialized, the start-up time of the environment adds to latency. If a function has not been used for some time, if more concurrent invocations are required, or if you update a function, new environments are created.  Creation of these environments can introduce latency for the invocations that are routed to a new environment. This latency is implied when using the term cold start. For most applications, this additional latency is not a problem. However, for some synchronous models, this latency can inhibit optimal performance. It is critical to understand latency requirements and try to optimize your function for peak performance. 
+
+After optimizing your function, another way to minimize cold starts is to use provisioned concurrency. Provisioned concurrency is a Lambda feature that prepares concurrent execution environments before invocations.
+**Best practice: Write functions to take advantage of warm starts**
+  1. Store and reference dependencies locally.
+  2. Limit re-initialization of variables.
+  3. Add code to check for and reuse existing connections.
+  4. Use tmp space as transient cache.
+  5. Check that background processes have completed.
+## AWS Lambda Function Permissions
+With Lambda functions, there are two sides that define the necessary scope of permissions – permission to invoke the function, and permission of the Lambda function itself to act upon other services. Because Lambda is fully integrated with AWS Identity and Access Management (IAM), you can control the exact actions of each side of the Lambda function.
+![image](https://github.com/user-attachments/assets/55ad90ca-9186-48b1-b062-382617790cca)
+
+Permissions to invoke the function are controlled using an IAM resource-based policy. An IAM execution role defines the permissions that control what the function is allowed to do when interacting with other AWS services. Look at the full interaction of these two permission types and then explore each one in further detail.
+
+![image](https://github.com/user-attachments/assets/9c96802b-3292-495d-8a18-e0b5ddfc1a95)
+Resource policies grant permissions to invoke the function, whereas the execution role strictly controls what the function can to do within the other AWS service.
+**Execution role**
+
+The execution role gives your function permissions to interact with other services. You provide this role when you create a function, and Lambda assumes the role when your function is invoked. The policy for this role defines the actions the role is allowed to take — for example, writing to a DynamoDB table. The role must include a trust policy that allows Lambda to “AssumeRole” so that it can take that action for another service. You can write the role or use the managed roles (with predefined permissions) provided by Lambda to simplify the process of creating an execution role. You can add or remove permissions from a function's execution role at any time, or configure your function to use a different role. 
+
+Remember to use the principle of least privilege when creating IAM policies and roles. Always start with the most restrictive set of permissions and only grant further permissions as required for the function to run. Using the principle of least privilege ensures security in depth and eliminates the need to remember to 'go back and fix it' once the function is in production.
+
+![image](https://github.com/user-attachments/assets/3ad8bbdb-9eba-4131-9e98-61ece819f2ec)
+You can also use (opens in a new tab)IAM Access Analyzer to help identify the required permissions for the IAM execution role
+
+1. **IAM Policy**
+   This IAM policy allows the function to perform the "Action": "dynamodb:PutItem" action against a DynamoDB table called "test" in the us-west-2 region.
+
+![image](https://github.com/user-attachments/assets/43c17630-62df-4252-9a4d-6b9e717b2f3b)
+2. **Trust Policy**
+A trust policy defines what actions your role can assume. The trust policy allows Lambda to use the role's permissions by giving the service principal lambda.amazonaws.com permission to call the AWS Security Token Service (AWS STS) AssumeRole action.
+
+This example illustrates that the principal "Service":"lambda.amazonaws.com" can take the "Action":"sts:AssumeRole" allowing Lambda to assume the role and invoke the function on your behalf.
+
+![image](https://github.com/user-attachments/assets/b182bd77-ce64-4db3-86a4-15837ceedca1)
+![AWS Rule](https://docs.aws.amazon.com/lambda/latest/dg/lambda-permissions.html)
+https://docs.aws.amazon.com/lambda/latest/dg/lambda-permissions.html
+https://docs.aws.amazon.com/lambda/latest/dg/invocation-async.html
+https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html
+https://docs.aws.amazon.com/lambda/latest/dg/lambda-concurrency.html
+
+**Rule Based Policy**
+A resource policy (also called a function policy) tells the Lambda service which principals have permission to invoke the Lambda function. An AWS principal may be a user, role, another AWS service, or another AWS account.
+
+![image](https://github.com/user-attachments/assets/5aadf296-64bd-4976-b95c-3e180f805ad0)
+
+**Rule comparsion**
+1. Lambda resource-based (function) policy
+
+- Associated with a "push" event source such as Amazon API Gateway
+- Created when you add a trigger to a Lambda function
+- Allows the event source to take the lambda:InvokeFunction action
+2. IAM execution role
+- Role selected or created when you create a Lambda function
+- IAM policy includes actions you can take with the resource
+- Trust policy that allows Lambda to AssumeRole
+- Creator must have permission for iam:PassRole
+## Authoring AWS Lambda Functions
+**Start with the handler method**
+The Lambda function handler is the method in your function code that processes events. When your function is invoked, Lambda runs the handler method. When the handler exits or returns a response, it becomes available to handle another event. The handler method takes two objects – the event object and the context object. 
+1. **Event Object**
+- The event object is required.
+- When your Lambda function is invoked in one of the supported languages, one of the parameters provided to your handler function is an event object. 
+- The event object differs in structure and contents, depending on which event source created it. 
+- The contents of the event parameter include all of the data and metadata your Lambda function needs to drive its logic.
+      - For example, an event created by Amazon API Gateway will contain details related to the HTTPS request that was made by the API client (for example, path, 
+        query string, request body). An event created by Amazon S3 when a new object is created will include details about the bucket and the new object.
+2. **Design best practices**
+  When designing and writing Lambda functions, regardless of the runtime you’re using, it is best practice to separate the business logic (the part of the code the defines the real-world business need) from the handler method. This makes your code more portable and you can target unit-tests at the code without worrying about the configuration of the function.
+  It is also a best practice to make your functions modular. For example, instead of having one function that does compression, thumb-nailing, and indexing, consider having three different functions that each serve a single purpose. 
+
+Because your functions only exist when there is work to be done, it is particularly important for serverless applications to treat each function as stateless. That is, no information about state should be saved within the context of the function itself.   
+
+- **Separate business logic**
+   Separate your core business logic from the handler event.This makes your code more portable and you can target unit-tests on your code without worrying about 
+   the configuration of the function.
+- **Write modular fucntions**
+  Module functions will reduce the amount of time that it takes for your deployment package to be downloaded and unpacked before invocation. Instead of having one 
+  function that does compression, thumb-nailing, and indexing, consider having three different functions that each serve a single purpose.
+- **Treact functions as stateless**
+  No information about state should be saved within the context of the function itself.
+  Because your functions only exist when there is work to be done, it is particularly important for serverless applications to treat each function as stateless. 
+  Consider one of the following options for storing state data:
+    - Amazon DynamoDB is serverless and scales horizontally to handle your Lambda invocations. It also has single-millisecond latency, which makes it a great choice for storing state information. 
+   - Amazon ElastiCache may be less expensive than DynamoDB if you have to put your Lambda function in a VPC. 
+   - Amazon S3 can be used as an inexpensive way to store state data if throughput is not critical and the type of state data you are saving will not change rapidly.
+- **Only include what you need**
+Minimize both your deployment package dependencies and its size.
+This can have a significant impact on the startup time for your function. For example, only choose the modules that you need — do not include an entire AWS SDK.
+Reduce the time it takes Lambda to unpack deployment packages authored in Java. 
+Put your dependency .jar files in a separate /lib directory.
+
+3. **Best practices for writing code**
+   When it comes to writing code, there are a few practices that are important to follow.
+   - **Include logging statements**
+     Lambda functions can and should include logging statements, which are written to CloudWatch.Implement structured logging throughout your applications. Most runtimes provide libraries to help use structured logging.
+   - **Use Return coding**
+     Functions must give Lambda information about the results of their actions. Use the return coding appropriate for your selected programming language to exit your code. For languages such as Node.js, Lambda provides additional methods on the context object for callbacks. You use these context-object methods to tell Lambda to terminate your function and optionally return values to the caller.
+  - **Provide environment variables**
+Take advantage of environment variables for operational parameters.You can use these parameters to pass updated configuration settings without changes to the code itself. You create an environment variable on your function by defining a key and a value. Your function uses the name of the key to retrieve the value of environment variable.
+  - **Add secret and reference data**
+    AWS Secrets Manager helps you organize and manage important configuration data such as credentials, passwords, and license keys.
+  - **Add recursive code**
+    Avoid a situation in which a function calls itself. Recursive code could lead to uncontrolled scaling of invocations that would make you lose control of your concurrency.
+- **Gather metrics with cloudWatch**
+The CloudWatch embedded metric format (EMF) is a JSON specification used to instruct CloudWatch Logs to automatically extract metric values embedded in structured log events. You can use CloudWatch to graph and create alarms on the extracted metric values.
+- **Resue execution context**
+  Take advantage of an existing execution context when you get a warm start by doing the following:
+  1. Store dependencies locally.
+  2. Limit re-initialization of variables.
+  3. Reuse existing connections.
+  4. Use tmp space as transient cache.
+  5. Check that background processes have completed.      
   

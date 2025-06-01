@@ -760,3 +760,47 @@ Put your dependency .jar files in a separate /lib directory.
     4. Use tmp space as transient cache.
     5. Check that background processes have completed.      
   
+## Building Lambda functions
+1. Lambda console editor
+2. Deployment packages
+3. Automate using tools
+   
+**What is AWS SAM?**
+
+AWS SAM is an open-source framework for building serverless applications. It provides shorthand syntax to express functions, APIs, databases, and event source mappings. With just a few lines per resource, you can define the application you want and model it using YAML. You provide AWS SAM with simplified instructions for your environment and during deployment AWS SAM transforms and expands the AWS SAM syntax into AWS CloudFormation syntax (a fully detailed CloudFormation template). All CloudFormation options are still available within AWS SAM. AWS SAM just makes it easier to set up the resources commonly needed for serverless applications. 
+
+**Serverless CI/CD Pipeline**
+![image](https://github.com/user-attachments/assets/e5fae94c-4e63-4971-98c2-98e1325153fa)
+You can incorporate additional tools to create an automated CI/CD pipeline for your serverless applications that integrate with AWS SAM. 
+
+- CodeBuild – Automate the process of packaging code and running tests before the code is deployed.
+- CodeDeploy – Use version management options to ensure safe deployments to production. 
+## Configuring Your Lambda Functions
+When building and testing a function, you must specify three primary configuration settings: memory, timeout, and concurrency. These settings are important in defining how each function performs. Deciding how to configure memory, timeout, and concurrency comes down to testing your function in real-world scenarios and against peak volume. As you monitor your functions, you must adjust the settings to optimize costs and ensure the desired customer experience with your application.
+![image](https://github.com/user-attachments/assets/79d71fea-920f-4952-bb06-29b0c9183cc2)
+**Memory**
+You can allocate up to 10 GB of memory to a Lambda function. Lambda allocates CPU and other resources linearly in proportion to the amount of memory configured. Any increase in memory size triggers an equivalent increase in CPU available to your function.
+**Timeout**
+The AWS Lambda timeout value dictates how long a function can run before Lambda terminates the Lambda function. At the time of this publication, the maximum timeout for a Lambda function is 900 seconds. This limit means that a single invocation of a Lambda function cannot run longer than 900 seconds (which is 15 minutes). 
+**Concurrency and scaling**
+- Unreserved concurrency
+- Reserved concurrency
+- Provisioned concurrency
+**How concurrency bursts are managed**
+A burst is when there is a sudden increase in the number of instances needed to fulfill the requested number of running functions. An example is an increase in orders on a website during a limited time sale. The burst concurrency quota is not per function. It applies to all of your functions in the Region.
+**CloudWatch metrics for concurrency**
+
+When your function finishes processing an event, Lambda sends metrics about the invocation to Amazon CloudWatch. You can build graphs and dashboards with these metrics in the CloudWatch console. You can also set alarms to respond to changes in use, performance, or error rates.
+
+CloudWatch includes two built-in metrics that help determine concurrency: ConcurrentExecutions and UnreservedConcurrentExecutions.
+
+**Testing concurrency**
+
+The most important factor for your concurrency, memory, and timeout settings is to verify application testing against real-world conditions. To do this, follow these suggestions:
+
+- Run performance tests that simulate peak levels of invocations.
+    - View the metrics for the amount of throttling that occurs during performance peaks.
+- Determine whether the existing backend can handle the speed of requests sent to it.
+    - Don't test in isolation. If you’re connecting to Amazon Relational Database Service (Amazon RDS), ensure that you test that the concurrency levels for your function can be processed by the database.
+- Does your error handling work as expected? 
+   - Tests should include pushing the application beyond the concurrency settings to verify correct error handling.

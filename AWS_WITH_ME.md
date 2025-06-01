@@ -744,19 +744,19 @@ Put your dependency .jar files in a separate /lib directory.
      Lambda functions can and should include logging statements, which are written to CloudWatch.Implement structured logging throughout your applications. Most runtimes provide libraries to help use structured logging.
    - **Use Return coding**
      Functions must give Lambda information about the results of their actions. Use the return coding appropriate for your selected programming language to exit your code. For languages such as Node.js, Lambda provides additional methods on the context object for callbacks. You use these context-object methods to tell Lambda to terminate your function and optionally return values to the caller.
-  - **Provide environment variables**
-Take advantage of environment variables for operational parameters.You can use these parameters to pass updated configuration settings without changes to the code itself. You create an environment variable on your function by defining a key and a value. Your function uses the name of the key to retrieve the value of environment variable.
-  - **Add secret and reference data**
-    AWS Secrets Manager helps you organize and manage important configuration data such as credentials, passwords, and license keys.
-  - **Add recursive code**
-    Avoid a situation in which a function calls itself. Recursive code could lead to uncontrolled scaling of invocations that would make you lose control of your concurrency.
-- **Gather metrics with cloudWatch**
-The CloudWatch embedded metric format (EMF) is a JSON specification used to instruct CloudWatch Logs to automatically extract metric values embedded in structured log events. You can use CloudWatch to graph and create alarms on the extracted metric values.
-- **Resue execution context**
-  Take advantage of an existing execution context when you get a warm start by doing the following:
-  1. Store dependencies locally.
-  2. Limit re-initialization of variables.
-  3. Reuse existing connections.
-  4. Use tmp space as transient cache.
-  5. Check that background processes have completed.      
+    - **Provide environment variables**
+  Take advantage of environment variables for operational parameters.You can use these parameters to pass updated configuration settings without changes to the code itself. You create an environment variable on your function by defining a key and a value. Your function uses the name of the key to retrieve the value of environment variable.
+    - **Add secret and reference data**
+      AWS Secrets Manager helps you organize and manage important configuration data such as credentials, passwords, and license keys.
+    - **Add recursive code**
+      Avoid a situation in which a function calls itself. Recursive code could lead to uncontrolled scaling of invocations that would make you lose control of your concurrency.
+  - **Gather metrics with cloudWatch**
+  The CloudWatch embedded metric format (EMF) is a JSON specification used to instruct CloudWatch Logs to automatically extract metric values embedded in structured log events. You can use CloudWatch to graph and create alarms on the extracted metric values.
+  - **Resue execution context**
+    Take advantage of an existing execution context when you get a warm start by doing the following:
+    1. Store dependencies locally.
+    2. Limit re-initialization of variables.
+    3. Reuse existing connections.
+    4. Use tmp space as transient cache.
+    5. Check that background processes have completed.      
   

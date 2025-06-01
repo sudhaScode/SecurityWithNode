@@ -520,3 +520,39 @@ bucket = s3.Bucket('my-bucket')
 for obj in bucket.objects.all():
     print(obj.key)
 ```
+
+# Lambda Functions
+AWS Lambda is an event-driven, serverless compute service that lets you run code without provisioning or managing servers. Explore deployment and testing considerations,monitoring, and troubleshooting Lambda functions.
+Some benefits of using Lambda include the following:
+- You can run code without provisioning or maintaining servers.
+- It initiates functions for you in response to events.
+- It scales automatically.
+- It provides built-in code monitoring and logging via Amazon CloudWatch.
+
+**Event-driven architectures**
+
+An event-driven architecture uses events to initiate actions and communication between decoupled services. An event is a change in state, a user request, or an update, like an item being placed in a shopping cart in an e-commerce website. When an event occurs, the information is published for other services to consume it. In event-driven architectures, events are the primary mechanism for sharing information across services. These events are observable, such as a new message in a log file, rather than directed, such as a command to specifically do something.
+<br>
+**Producers, routers, consumers**
+
+AWS Lambda is an example of an event-driven architecture. Most AWS services generate events and act as an event source for Lambda. Lambda runs custom code (functions) in response to events. Lambda functions are designed to process these events and, once invoked, may initiate other actions or subsequent events.
+
+![image](https://github.com/user-attachments/assets/766549b7-7cb1-4f7a-b2a9-d83319dea79a)
+
+**What is a Lambda function?**
+
+The code you run on AWS Lambda is called a Lambda function. Think of a function as a small, self-contained application. After you create your Lambda function, it is ready to run as soon as it is initiated. Each function includes your code as well as some associated configuration information, including the function name and resource requirements. Lambda functions are stateless, with no affinity to the underlying infrastructure. Lambda can rapidly launch as many copies of the function as needed to scale to the rate of incoming events.
+
+ ### Actions you can take with AWS Lambda:
+ - Access Permissions
+ - Triggering Events - Specify which events or event sources can initiate the function
+ - Write code - with dependencies or libraries necessary to your code
+ - Configure Execution Parameters - such as memory , timeout, and concurrency
+Serverless provides speed and innovation in your business applications
+
+```
+With AWS Lambda, you can run code without provisioning or managing servers. Lambda initiates events on your behalf, scales automatically, and provides built-in monitoring and logging. You can write code in your preferred language. You do configure the memory for your function, but not CPU. You don't work with the OS. AWS provides the operating environment at runtime.
+```
+
+
+  

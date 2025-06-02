@@ -555,6 +555,9 @@ With AWS Lambda, you can run code without provisioning or managing servers. Lamb
 ```
 ## AWS Lambda works using event sources and triggers:
 Understand event driven architectures like AWS Lambda
+- Producers are users who create the events. Events contain all the necessary information required for the consumers to take action on the event.
+- The router ingests, filters, and pushes the events to the appropriate consumers. It does this by using a set of rules or another service, such as Amazon Simple Notification Service (Amazon SNS), to send the messages.
+- Consumers subscribe to be notified about the events, or they can monitor an event stream and act on events that pertain only to them.
 **Invocation models for running Lambda functions**
 
 Event sources can invoke a Lambda function in three general patterns. These patterns are called invocation models. Each invocation model is unique and addresses a different application and developer needs. The invocation model you use for your Lambda function often depends on the event source you are using. It's important to understand how each invocation model initializes functions and handles errors and retries.
@@ -804,3 +807,59 @@ The most important factor for your concurrency, memory, and timeout settings is 
     - Don't test in isolation. If you’re connecting to Amazon Relational Database Service (Amazon RDS), ensure that you test that the concurrency levels for your function can be processed by the database.
 - Does your error handling work as expected? 
    - Tests should include pushing the application beyond the concurrency settings to verify correct error handling.
+## Deploying and Testing Serverless Applications
+AWS Serverless Application Model (AWS SAM), can simplify your deployment practices. AWS SAM can make the move to serverless more efficient. 
+The AWS CloudFormation template is considered the blueprint for the Lambda function.
+
+The CloudFormation template specifies every detail of the Lambda function and the environment required for the Lambda function to run.
+
+**AWS SAM makes serverless development easier.**
+
+Earlier in the course, you learned that AWS SAM uses a set of CloudFormation commands. When you provide AWS SAM with simplified instructions for your environment, it transforms that information into the fully detailed CloudFormation template that you can use to build your stack. All CloudFormation options are still available within AWS SAM. The service streamlines the configuration of commonly used serverless application resources.
+1. how to create, edit, and deploy a Lambda function by using AWS SAM and AWS Cloud9
+**Monitoring and Troubleshooting**
+AWS Lambda integrates with other AWS services to help you monitor and troubleshoot your Lambda functions
+how to use these AWS services to monitor, trace, debug, and troubleshoot your Lambda functions and applications.
+Types of monitoring graphs
+
+AWS Lambda automatically monitors Lambda functions on your behalf and reports metrics through Amazon CloudWatch. To help you monitor your code when it runs, Lambda automatically tracks the following:
+ - Number of requests
+ - Invocation duration per request
+ - Number of requests that result in an error
+
+1. Invocations
+   The number of times your function code is run, including successful runs and runs that result in a function error. If the invocation request is throttled or otherwise resulted in an invocation error, invocations aren't recorded.
+2. Duration
+   The amount of time that your function code spends processing an event. The billed duration for an invocation is the value of Duration rounded up to the nearest millisecond.
+3. Errors
+   The number of invocations that result in a function error. Function errors include exceptions thrown by your code and exceptions thrown by the Lambda runtime. The runtime returns errors for issues such as timeouts and configuration errors.
+4. Throttles
+   The number of times that a process failed because of concurrency limits. When all function instances are processing requests and no concurrency is available to scale up, Lambda rejects additional requests.
+5. IteratorAge
+   Pertains to event source mappings that read from streams. The age of the last record in the event. The age is the amount of time between when the stream receives the record and when the event source mapping sends the event to the function.
+6. DeadLetterErrors
+   For asynchronous invocation, this is the number of times Lambda attempts to send an event to a dead-letter queue but fails. 
+7. ConcurrentExecutions
+The number of function instances that are processing events.
+You can also view metrics for the following:
+
+- UnreservedConcurrentExecutions – The number of events that are being processed by functions that don't have reserved concurrency. 
+- ProvisionedConcurrentExecutions – The number of function instances that are processing events on provisioned concurrency. For each invocation of an alias or version with provisioned concurrency, Lambda emits the current count.
+**Amazon CloudWatch Lambda Insights**
+Amazon CloudWatch Lambda Insights is a monitoring and troubleshooting solution for serverless applications running on Lambda. Lambda Insights collects, aggregates, and summarizes system-level metrics. It also summarizes diagnostic information such as cold starts and Lambda worker shutdowns to help you isolate issues with your Lambda functions and resolve them quickly.
+**Additional monitoring and troubleshooting tools**
+  1. AWS CloudTrail
+  AWS CloudTrail helps audit your application by recording all the API actions made against the application. These logs can be exported to the analysis tool of your choice for additional analysis. 
+CloudTrail logging provides the following options:
+- The default Lambda CloudTrail logging is for control plane (management) events.
+- Optional logging: CloudTrail also logs data events. You can turn on data event logging so that you log an event every time Lambda functions are invoked.
+CloudTrail can be an important tool for auditing serverless deployments and rolling back unplanned deployments.
+  3. Dead letter queues
+  Dead-letter queues help you capture application errors that must receive a response, such as an ecommerce application that processes orders. If an order fails, you cannot ignore that order error. You move that error into the dead-letter queue and manually look at the queue and fix the problems.
+
+- Use dead-letter queues to analyze failures for follow-up or code corrections.
+- Dead-letter queues are available for asynchronous and non-stream polling events.
+- A dead-letter queue can be an Amazon Simple Notification Service (Amazon SNS) topic or an Amazon Simple Queue Service (Amazon SQS) queue.
+
+## Amazon API Gateway for Serverless Applications
+  

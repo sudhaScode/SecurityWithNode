@@ -1302,3 +1302,125 @@ Resource policy and authentication methods work together to grant access to your
              - If the caller and the API owner are in the same account, either user policies or the resource policy must explicitly allow the caller to proceed.
 
 - Cognito authentication and resource policy: If API Gateway authenticates the caller from Cognito, the resource policy is evaluated independently.If there is an explicit allow, the caller proceeds. Otherwise, deny or neither allow nor deny will result in a deny.
+
+## Monitoring and Troubleshooting
+**CloudWatch Metrics for API Gateway**
+After your APIs are deployed, you can use CloudWatch Metrics to monitor performance of deployed APIs. API Gateway has seven default metrics out of the box:
+- Count: Total number of API requests in a period
+- Latency: Time between when API Gateway receives a request from a client and when it returns a response to the client; this includes the integration latency and other API Gateway overhead
+- IntegrationLatency: Time between when API Gateway relays a request to the backend and when it receives a response from the backend
+- 4xxError: Client-side errors captured in a specified period
+- 5xxError: Server-side errors captured in a specified period
+- CacheHitCount: Number of requests served from the API cache in a given period
+- CacheMissCount: Number of requests served from the backend in a given period, when API caching is turned on
+ With these metrics, you can monitor details such as the following:
+ - How often your APIs are being called
+ - The number of invocations to your API
+ - The latency of the API responses
+ - If there are any errors, and if so, whether they are 400 errors or 500 errors
+ - Whether your cache is being hit or how many times the backend needed to be called while caching was enabled
+**Calculating API Gateway overhead**
+Two key metrics that are used to calculate the API Gateway overhead of deployed APIs are the Latency and IntegrationLatency CloudWatch Metrics.
+- The latency metric gives you details about how long it takes for a full round-trip response, from the second your customer invokes your API to when your API responds with the results. This is a full round-trip duration of an API request through API Gateway.
+- Integration latency is how long it takes for API Gateway to make the invocation to your backend and receive the response.
+The difference between these two metrics gives you your API Gateway overhead. Together, these metrics can help you fine-tune your applications and see where the bottlenecks are.
+**CloudWatch Logs for API Gateway**
+In addition to CloudWatch Metrics, you can also learn a lot about how your APIs are performing from CloudWatch Logs. API Gateway has two types of CloudWatch logs built in.
+- Execution Logging
+The first type is execution logging, which logs what’s happening on the roundtrip of a request. You can see all the details from when the request was made, the other request parameters, everything that happened between the requests, and what happened when API Gateway returned the results to the client that’s calling the service.
+Execution logs can be useful to troubleshoot APIs, but can result in logging sensitive data. Because of this, it is recommended you don't enable Log full requests/responses data for production APIs. In addition, there is a cost component associated with logging your APIs.
+![image](https://github.com/user-attachments/assets/7f6110b9-ae90-4026-ac12-d0dd075a872e)
+- Access Logging
+The second type is access logging, which provides details about who's invoking your API. This includes everything including IP address, the method used, the user protocol, and the agent that's invoking your API.
+![image](https://github.com/user-attachments/assets/5c35a560-b9ac-4f1b-b282-beb0e813cf03)
+Access logging is fully customizable using JSON formatting. If you need to, you can publish them to a third-party resource to help you analyze them.
+**Monitoring with X-Ray and CloudTrail**
+There are two AWS tools you should understand to analyze your API use and performance: AWS X-Ray and AWS CloudTrail.
+1. AWS X-Ray
+trace and analyze requests as they travel through your APIs to services:
+-- Analyze latencies and debug errors in your APIs and their backend services.
+-- Configure sampling rules to focus on specific requests.
+2. AWS CloudTrail
+CloudTrail, captures all API calls for API Gateway as events, including calls from the API Gateway console and from code calls to your API Gateway APIs.
+CloudTrail captures all API calls for API Gateway as events.
+-- IP address, requester, and time of request are included.
+-- Event history can be reviewed.
+-- Create a trail to send events to an Amazon Simple Storage Service (Amazon S3) bucket.
+**Data Mapping and Request Validation**
+1. Data transformations with mapping templates
+In API Gateway, an API's method request can take a payload in a different format from the corresponding integration request payload as required by your backend and the reverse.
+Mapping templates can be added to the integration request to transform the incoming request to the format required by the backend of the application or to transform the backend payload to the format required by the method response.
+2. JSON to XML transformation example
+![image](https://github.com/user-attachments/assets/ec1b17ed-cebc-4d23-8508-ab0153565fdb)
+- Client makes a GET request to /sayHello.
+- It expects a XML payload.
+- Your backend only responds with JSON.
+- You can create a transformation template to make it work.
+**Handling errors with Gateway Responses**
+For invalid requests, API Gateway bypasses the integration altogether and returns an error response. By default, the error response contains a short descriptive error message.
+For some of the error responses, API Gateway allows customization by API developers to return the responses in different formats.
+- Change HTTP status code.
+- Modify body content.
+- Add headers.
+**Offloading request validation to API Gateway**
+  In conjunction with data transformation and customized Gateway Responses, you can also let API Gateway handle some of your basic validations, rather than making the call or building that validation into the backend.
+  In this example, the request must have a "make" value, and only the values of Tesla or Hyundai would make it to the backend.
+  ![image](https://github.com/user-attachments/assets/e7010f42-74fe-41c5-a77a-c910779e1462)
+  - The first request would pass because it has a make of Tesla.
+  - The second would fail because it has a make but it is not one of the choices in the enumerated list.
+  - The third option would fail because it doesn’t have a value for make at all.
+API Gateway verifies either or both of the following conditions for you.
+- The required request parameters in the URL, query string, and headers of an incoming request are included and non-blank.
+**Wrap-up**
+  the features and benefits API Gateway provides to your applications and architectures.
+## Amazon DynamoDB for Serverless Architectures
+DynamoDB is a serverless, fully managed NoSQL (non-relational) database service designed for Online Transactional Processing (OLTP) workloads.
+- Flexible Schema
+- JSON document or key-value data structures
+- Supports event-driven programming
+- Accessible via AWS Management Console, CLI, and SDK
+- Availability, durabxility, and scalability built-in
+- Scales horizontally
+- Provides fine-grained access control
+- Integrates with other AWS services
+**AWS Purpose-built Database Services**
+![image](https://github.com/user-attachments/assets/152d0a01-3d6f-439b-890d-02d5cba8c629)
+1. **How Amazon DynamoDB Works**
+   ![image](https://github.com/user-attachments/assets/3a1cb6f1-862d-4807-a886-805f1d52fcb2)
+   - Tables, Items, and Partitions
+   - More on Primary keys > Local secondary Key, Global Secondary key
+   - Durability and Availability
+   - Consistency
+   - Requests Throughput
+   - Streams
+2. **Tables and Partitions**
+In Amazon DynamoDB, data is stored in tables. A table contains items with attributes. You can think of items as rows or tuples in a relational database and attributes as columns.
+![image](https://github.com/user-attachments/assets/ecaae0fa-cbfc-4186-bb39-75ed6e0b348b)
+- **Item**
+An item is a collection of attributes. Items are analogous to rows and attributes are analogous to columns in a relational database table.
+Each attribute has a name, data type, and value. An item can have any number of attributes. Unlike a relational database, DynamoDB is not constrained by a pre-defined schema. Items in a table can have different types of attributes.
+-- Key-Value Model
+-- JSON Document Model
+- **Partition Key**
+DynamoDB stores data in partitions and divides a table's items into multiple partitions based on the partition key value.
+- **Partition**
+A partition is an allocation of storage for a table, backed by solid-state drives (SSDs) and automatically replicated across multiple Availability Zones within an AWS Region. Partition management is handled entirely by DynamoDB. The partition key of an item is also known as its hash attribute.
+- **Sort Key**
+A sort key can be defined to store all of the items with the same partition key value physically close together and order them by sort key value in the partition. It represents a one-to-many relationship based on the partition key and enables querying on the sort key attribute. The sort key of an item is also known as its range attribute.
+
+**Two Types of Primary Keys**
+A table has a primary key that uniquely identifies each item in the table. There are two types of primary keys:
+- partition primary key: An item is uniquely defined by its partition key.
+- partition and sort primary keys: An item is uniquely identified by the combination of its partition key and sort key.
+
+**Read and Write Capacity Units**
+You must specify read and write throughput values when you create a table. DynamoDB reserves the necessary resources to handle your throughput requirements and divides the throughput evenly among partitions.
+- Read Capacity Unit (RCU)
+-- The number of strongly consistent reads per second of items up to 4 KB in size.
+-- 1 RCU = 1 item (4kb or less) read per second.
+Note: Eventually consistent reads consume half as many RCUs as strongly consistent reads.
+
+- Write Capacity Unit (WCU)
+- - The number of 1KB writes per second.
+- - 1 WCU= 1(1kb or less) write per second.
+ 

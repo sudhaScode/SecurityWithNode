@@ -1419,8 +1419,10 @@ You must specify read and write throughput values when you create a table. Dynam
 -- The number of strongly consistent reads per second of items up to 4 KB in size.
 -- 1 RCU = 1 item (4kb or less) read per second.
 Note: Eventually consistent reads consume half as many RCUs as strongly consistent reads.
+## Devops on AWS
+      ![image](https://github.com/user-attachments/assets/118b1399-9d90-4321-af0f-a4b75a41b51b)
 
-- Write Capacity Unit (WCU)
-- - The number of 1KB writes per second.
-- - 1 WCU= 1(1kb or less) write per second.
+![image](https://github.com/user-attachments/assets/379ed819-a7be-4ba7-9a8e-59838c96d40e)
+
  
+

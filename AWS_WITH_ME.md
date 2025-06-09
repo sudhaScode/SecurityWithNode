@@ -1420,14 +1420,13 @@ You must specify read and write throughput values when you create a table. Dynam
 -- 1 RCU = 1 item (4kb or less) read per second.
 Note: Eventually consistent reads consume half as many RCUs as strongly consistent reads.
 ## Devops on AWS
-      ![image](https://github.com/user-attachments/assets/118b1399-9d90-4321-af0f-a4b75a41b51b)
+![image](https://github.com/user-attachments/assets/118b1399-9d90-4321-af0f-a4b75a41b51b)
 
 ![image](https://github.com/user-attachments/assets/379ed819-a7be-4ba7-9a8e-59838c96d40e)
 ![image](https://github.com/user-attachments/assets/b749d709-4f4e-4f2f-ac15-24a23d7d44fc)
       
-      ![image](https://github.com/user-attachments/assets/5db5cd41-8687-47e0-91a0-4bd9a01d03f3)
-
-      ![image](https://github.com/user-attachments/assets/05a12b1d-aa86-4380-91c7-62a74d0b2c4b)
+![image](https://github.com/user-attachments/assets/5db5cd41-8687-47e0-91a0-4bd9a01d03f3)
+![image](https://github.com/user-attachments/assets/05a12b1d-aa86-4380-91c7-62a74d0b2c4b)
 
 
 
